@@ -1,9 +1,9 @@
 ---
 layout: post
 title: "Welcome to My Tech Blog"
-date: 2024-03-27 09:00:00 -0300
+date: 2025-06-09 09:00:00 -0300
 categories: general
-tags: [welcome, tech, blog]
+tags: [blog]
 author: Rafael Oliveira
 ---
 
