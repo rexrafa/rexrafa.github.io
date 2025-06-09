@@ -1,0 +1,268 @@
+---
+layout: default
+title: Archive
+permalink: /archive/
+---
+
+<div class="archive-page">
+  <h1>Post Archive</h1>
+  <p>All posts organized by date.</p>
+  
+  <div class="archive-stats">
+    <div class="stat">
+      <span class="stat-number">{{ site.posts.size }}</span>
+      <span class="stat-label">Total Posts</span>
+    </div>
+    <div class="stat">
+      <span class="stat-number">{{ site.tags.size }}</span>
+      <span class="stat-label">Tags</span>
+    </div>
+  </div>
+  
+  <div class="archive-timeline">
+    {% assign posts_by_year = site.posts | group_by_exp: "post", "post.date | date: '%Y'" %}
+    {% for year in posts_by_year %}
+      <div class="year-section">
+        <h2 class="year-header">{{ year.name }}</h2>
+        
+        {% assign posts_by_month = year.items | group_by_exp: "post", "post.date | date: '%B'" %}
+        {% for month in posts_by_month %}
+          <div class="month-section">
+            <h3 class="month-header">{{ month.name }}</h3>
+            
+            <div class="month-posts">
+              {% for post in month.items %}
+                <article class="archive-post">
+                  <div class="post-date">
+                    <span class="day">{{ post.date | date: "%d" }}</span>
+                  </div>
+                  <div class="post-info">
+                    <h4><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h4>
+                    {% if post.tags.size > 0 %}
+                      <div class="post-tags">
+                        {% for tag in post.tags limit: 3 %}
+                          <span class="tag">{{ tag }}</span>
+                        {% endfor %}
+                        {% if post.tags.size > 3 %}
+                          <span class="tag-more">+{{ post.tags.size | minus: 3 }} more</span>
+                        {% endif %}
+                      </div>
+                    {% endif %}
+                  </div>
+                </article>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<style>
+.archive-stats {
+  display: flex;
+  gap: 2rem;
+  margin: 2rem 0 3rem 0;
+  justify-content: center;
+}
+
+.stat {
+  text-align: center;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  min-width: 120px;
+}
+
+.stat-number {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.archive-timeline {
+  position: relative;
+}
+
+.archive-timeline::before {
+  content: '';
+  position: absolute;
+  left: 2rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--border-color);
+}
+
+.year-section {
+  margin-bottom: 3rem;
+  position: relative;
+}
+
+.year-header {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 1.5rem;
+  position: relative;
+  padding-left: 4rem;
+}
+
+.year-header::before {
+  content: '';
+  position: absolute;
+  left: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  background: var(--primary-color);
+  border-radius: 50%;
+  border: 3px solid var(--bg-primary);
+}
+
+.month-section {
+  margin-bottom: 2rem;
+  padding-left: 4rem;
+}
+
+.month-header {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.month-header::before {
+  content: '';
+  position: absolute;
+  left: -2.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background: var(--text-secondary);
+  border-radius: 50%;
+  border: 2px solid var(--bg-primary);
+}
+
+.month-posts {
+  display: grid;
+  gap: 1rem;
+}
+
+.archive-post {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+}
+
+.archive-post:hover {
+  background: var(--bg-tertiary);
+  transform: translateX(0.5rem);
+}
+
+.post-date {
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+  background: var(--primary-color);
+  color: white;
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.post-info {
+  flex: 1;
+}
+
+.post-info h4 {
+  margin-bottom: 0.5rem;
+}
+
+.post-info h4 a {
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.post-info h4 a:hover {
+  color: var(--primary-color);
+}
+
+.post-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.tag {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-radius: 12px;
+}
+
+.tag-more {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .archive-timeline::before {
+    left: 1rem;
+  }
+  
+  .year-header {
+    padding-left: 2.5rem;
+    font-size: 1.5rem;
+  }
+  
+  .year-header::before {
+    left: 0.5rem;
+  }
+  
+  .month-section {
+    padding-left: 2.5rem;
+  }
+  
+  .month-header::before {
+    left: -1.5rem;
+  }
+  
+  .archive-stats {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .archive-post {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .post-date {
+    align-self: center;
+  }
+}
+</style>
+

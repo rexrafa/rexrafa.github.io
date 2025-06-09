@@ -1,0 +1,234 @@
+<!-- Newsletter signup component -->
+<div class="newsletter-signup">
+  <div class="newsletter-content">
+    <div class="newsletter-icon">
+      <i class="fas fa-envelope-open"></i>
+    </div>
+    <div class="newsletter-text">
+      <h3>Stay Updated</h3>
+      <p>Get notified about new posts on AWS, DevOps, and AI. I publish twice a week with practical insights and tutorials.</p>
+    </div>
+  </div>
+  
+  <form class="newsletter-form" id="newsletter-form" action="#" method="post">
+    <div class="form-group">
+      <input type="email" 
+             id="newsletter-email" 
+             name="email" 
+             placeholder="Enter your email address" 
+             required
+             class="newsletter-input">
+      <button type="submit" class="newsletter-button">
+        <span class="button-text">Subscribe</span>
+        <span class="button-loading" style="display: none;">
+          <i class="fas fa-spinner fa-spin"></i>
+        </span>
+      </button>
+    </div>
+    <div class="newsletter-privacy">
+      <small>
+        <i class="fas fa-shield-alt"></i>
+        No spam, unsubscribe anytime. I respect your privacy.
+      </small>
+    </div>
+  </form>
+  
+  <div class="newsletter-success" id="newsletter-success" style="display: none;">
+    <i class="fas fa-check-circle"></i>
+    <span>Thanks for subscribing! Check your email to confirm.</span>
+  </div>
+</div>
+
+<style>
+.newsletter-signup {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  color: white;
+  padding: 2.5rem;
+  border-radius: var(--border-radius);
+  margin: 3rem 0;
+  text-align: center;
+}
+
+.newsletter-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.newsletter-icon {
+  font-size: 3rem;
+  opacity: 0.9;
+}
+
+.newsletter-text {
+  flex: 1;
+  min-width: 250px;
+}
+
+.newsletter-text h3 {
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.newsletter-text p {
+  margin: 0;
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+.newsletter-form {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.form-group {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.newsletter-input {
+  flex: 1;
+  padding: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--border-radius);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+  transition: var(--transition);
+}
+
+.newsletter-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.newsletter-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.newsletter-button {
+  padding: 1rem 2rem;
+  background: white;
+  color: var(--primary-color);
+  border: none;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 120px;
+  position: relative;
+}
+
+.newsletter-button:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+}
+
+.newsletter-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.newsletter-privacy {
+  color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.newsletter-success {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #10b981;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .newsletter-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .form-group {
+    flex-direction: column;
+  }
+  
+  .newsletter-input {
+    margin-bottom: 0.5rem;
+  }
+  
+  .newsletter-signup {
+    padding: 2rem 1.5rem;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('newsletter-form');
+  const emailInput = document.getElementById('newsletter-email');
+  const submitButton = form.querySelector('.newsletter-button');
+  const buttonText = submitButton.querySelector('.button-text');
+  const buttonLoading = submitButton.querySelector('.button-loading');
+  const successMessage = document.getElementById('newsletter-success');
+  
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const email = emailInput.value.trim();
+    if (!email || !isValidEmail(email)) {
+      showError('Please enter a valid email address');
+      return;
+    }
+    
+    // Show loading state
+    submitButton.disabled = true;
+    buttonText.style.display = 'none';
+    buttonLoading.style.display = 'inline';
+    
+    // Simulate newsletter signup (replace with actual implementation)
+    setTimeout(() => {
+      // Hide form and show success message
+      form.style.display = 'none';
+      successMessage.style.display = 'flex';
+      
+      // You can replace this with actual newsletter service integration
+      // Examples: Mailchimp, ConvertKit, EmailOctopus, etc.
+      console.log('Newsletter signup:', email);
+      
+      // Optional: Send to a serverless function or third-party service
+      // fetch('/api/newsletter-signup', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ email: email })
+      // });
+      
+    }, 1500);
+  });
+  
+  function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+  
+  function showError(message) {
+    // Simple error handling - you can enhance this
+    alert(message);
+  }
+});
+</script>
+

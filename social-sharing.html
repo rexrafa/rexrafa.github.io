@@ -1,0 +1,371 @@
+<!-- Social sharing buttons include -->
+<div class="social-sharing-enhanced">
+  <h3>Share this post</h3>
+  <p class="sharing-subtitle">Help others discover this content</p>
+  
+  <div class="share-buttons-grid">
+    <!-- LinkedIn Sharing -->
+    <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ page.url | absolute_url | url_encode }}" 
+       target="_blank" 
+       class="share-btn linkedin-enhanced"
+       onclick="window.open(this.href, 'linkedin-share', 'width=550,height=500');return false;"
+       data-platform="linkedin">
+      <div class="share-icon">
+        <i class="fab fa-linkedin"></i>
+      </div>
+      <div class="share-content">
+        <span class="share-title">LinkedIn</span>
+        <span class="share-desc">Share with your professional network</span>
+      </div>
+    </a>
+    
+    <!-- Twitter Sharing -->
+    <a href="https://twitter.com/intent/tweet?text={{ page.title | url_encode }}&url={{ page.url | absolute_url | url_encode }}&hashtags={% for tag in page.tags limit:3 %}{{ tag | replace: ' ', '' }}{% unless forloop.last %},{% endunless %}{% endfor %}" 
+       target="_blank" 
+       class="share-btn twitter-enhanced"
+       onclick="window.open(this.href, 'twitter-share', 'width=550,height=400');return false;"
+       data-platform="twitter">
+      <div class="share-icon">
+        <i class="fab fa-twitter"></i>
+      </div>
+      <div class="share-content">
+        <span class="share-title">Twitter</span>
+        <span class="share-desc">Tweet to your followers</span>
+      </div>
+    </a>
+    
+    <!-- Facebook Sharing -->
+    <a href="https://www.facebook.com/sharer/sharer.php?u={{ page.url | absolute_url | url_encode }}" 
+       target="_blank" 
+       class="share-btn facebook-enhanced"
+       onclick="window.open(this.href, 'facebook-share', 'width=550,height=400');return false;"
+       data-platform="facebook">
+      <div class="share-icon">
+        <i class="fab fa-facebook"></i>
+      </div>
+      <div class="share-content">
+        <span class="share-title">Facebook</span>
+        <span class="share-desc">Share with friends</span>
+      </div>
+    </a>
+    
+    <!-- Copy Link -->
+    <button class="share-btn copy-link-enhanced" 
+            onclick="copyPostLink('{{ page.url | absolute_url }}')"
+            data-platform="copy">
+      <div class="share-icon">
+        <i class="fas fa-link"></i>
+      </div>
+      <div class="share-content">
+        <span class="share-title">Copy Link</span>
+        <span class="share-desc">Copy URL to clipboard</span>
+      </div>
+    </button>
+    
+    <!-- Email Sharing -->
+    <a href="mailto:?subject={{ page.title | url_encode }}&body=I thought you might find this interesting: {{ page.url | absolute_url | url_encode }}" 
+       class="share-btn email-enhanced"
+       data-platform="email">
+      <div class="share-icon">
+        <i class="fas fa-envelope"></i>
+      </div>
+      <div class="share-content">
+        <span class="share-title">Email</span>
+        <span class="share-desc">Send via email</span>
+      </div>
+    </a>
+    
+    <!-- WhatsApp Sharing -->
+    <a href="https://wa.me/?text={{ page.title | url_encode }}%20{{ page.url | absolute_url | url_encode }}" 
+       target="_blank" 
+       class="share-btn whatsapp-enhanced"
+       data-platform="whatsapp">
+      <div class="share-icon">
+        <i class="fab fa-whatsapp"></i>
+      </div>
+      <div class="share-content">
+        <span class="share-title">WhatsApp</span>
+        <span class="share-desc">Share via WhatsApp</span>
+      </div>
+    </a>
+  </div>
+  
+  <!-- LinkedIn-specific call-to-action -->
+  <div class="linkedin-cta">
+    <div class="linkedin-cta-content">
+      <i class="fab fa-linkedin"></i>
+      <div class="cta-text">
+        <strong>Follow me on LinkedIn</strong>
+        <p>Get notified when I publish new posts about AWS, DevOps, and AI</p>
+      </div>
+      <a href="https://linkedin.com/in/{{ site.social.linkedin }}" target="_blank" class="cta-button">
+        Follow <i class="fas fa-external-link-alt"></i>
+      </a>
+    </div>
+  </div>
+</div>
+
+<style>
+.social-sharing-enhanced {
+  margin: 3rem 0;
+  padding: 2.5rem;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+.social-sharing-enhanced h3 {
+  text-align: center;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+}
+
+.sharing-subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+}
+
+.share-buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.share-btn {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  text-decoration: none;
+  transition: var(--transition);
+  cursor: pointer;
+  font-family: inherit;
+  width: 100%;
+}
+
+.share-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.share-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.linkedin-enhanced .share-icon {
+  background: #0077b5;
+}
+
+.twitter-enhanced .share-icon {
+  background: #1da1f2;
+}
+
+.facebook-enhanced .share-icon {
+  background: #1877f2;
+}
+
+.copy-link-enhanced .share-icon {
+  background: var(--text-secondary);
+}
+
+.email-enhanced .share-icon {
+  background: var(--primary-color);
+}
+
+.whatsapp-enhanced .share-icon {
+  background: #25d366;
+}
+
+.share-content {
+  flex: 1;
+  text-align: left;
+}
+
+.share-title {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.share-desc {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.linkedin-enhanced:hover {
+  border-color: #0077b5;
+}
+
+.twitter-enhanced:hover {
+  border-color: #1da1f2;
+}
+
+.facebook-enhanced:hover {
+  border-color: #1877f2;
+}
+
+.copy-link-enhanced:hover {
+  border-color: var(--text-secondary);
+}
+
+.copy-link-enhanced.copied .share-icon {
+  background: #10b981;
+}
+
+.copy-link-enhanced.copied .share-title::after {
+  content: " ✓";
+  color: #10b981;
+}
+
+.email-enhanced:hover {
+  border-color: var(--primary-color);
+}
+
+.whatsapp-enhanced:hover {
+  border-color: #25d366;
+}
+
+.linkedin-cta {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.linkedin-cta-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--bg-primary);
+  border-radius: var(--border-radius);
+  border: 2px solid #0077b5;
+}
+
+.linkedin-cta-content > .fab-linkedin {
+  font-size: 2rem;
+  color: #0077b5;
+  flex-shrink: 0;
+}
+
+.cta-text {
+  flex: 1;
+}
+
+.cta-text strong {
+  display: block;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.cta-text p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.cta-button {
+  background: #0077b5;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  text-decoration: none;
+  font-weight: 600;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.cta-button:hover {
+  background: #005885;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .share-buttons-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .linkedin-cta-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+  }
+  
+  .social-sharing-enhanced {
+    padding: 1.5rem;
+  }
+}
+</style>
+
+<script>
+function copyPostLink(url) {
+  const button = event.target.closest('.copy-link-enhanced');
+  
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(function() {
+      showCopySuccess(button);
+    }).catch(function() {
+      fallbackCopyToClipboard(url, button);
+    });
+  } else {
+    fallbackCopyToClipboard(url, button);
+  }
+}
+
+function fallbackCopyToClipboard(text, button) {
+  const textArea = document.createElement('textarea');
+  textArea.value = text;
+  textArea.style.position = 'fixed';
+  textArea.style.left = '-999999px';
+  textArea.style.top = '-999999px';
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  
+  try {
+    document.execCommand('copy');
+    showCopySuccess(button);
+  } catch (err) {
+    console.error('Failed to copy text: ', err);
+  }
+  
+  document.body.removeChild(textArea);
+}
+
+function showCopySuccess(button) {
+  button.classList.add('copied');
+  
+  setTimeout(() => {
+    button.classList.remove('copied');
+  }, 2000);
+}
+
+// Track sharing events (optional analytics)
+document.addEventListener('click', function(e) {
+  const shareBtn = e.target.closest('.share-btn');
+  if (shareBtn && shareBtn.dataset.platform) {
+    // You can add analytics tracking here
+    console.log('Shared via:', shareBtn.dataset.platform);
+  }
+});
+</script>
+

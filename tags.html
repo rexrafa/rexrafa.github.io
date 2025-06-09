@@ -1,0 +1,128 @@
+---
+layout: default
+title: Tags
+permalink: /tags/
+---
+
+<div class="tags-page">
+  <h1>All Tags</h1>
+  <p>Browse posts by topic and technology.</p>
+  
+  <div class="tags-cloud">
+    {% assign sorted_tags = site.tags | sort %}
+    {% for tag in sorted_tags %}
+      {% assign tag_name = tag[0] %}
+      {% assign tag_posts = tag[1] %}
+      <a href="#{{ tag_name | slugify }}" class="tag-cloud-item" data-count="{{ tag_posts.size }}">
+        {{ tag_name }}
+        <span class="tag-count">({{ tag_posts.size }})</span>
+      </a>
+    {% endfor %}
+  </div>
+  
+  <div class="tags-sections">
+    {% for tag in sorted_tags %}
+      {% assign tag_name = tag[0] %}
+      {% assign tag_posts = tag[1] %}
+      
+      <section class="tag-section" id="{{ tag_name | slugify }}">
+        <h2>{{ tag_name }}</h2>
+        <div class="tag-posts">
+          {% for post in tag_posts %}
+            <article class="tag-post">
+              <h3><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h3>
+              <p class="post-meta">{{ post.date | date: "%B %d, %Y" }}</p>
+              <p class="post-excerpt">{{ post.excerpt | strip_html | truncatewords: 20 }}</p>
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+    {% endfor %}
+  </div>
+</div>
+
+<style>
+.tags-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 2rem 0 3rem 0;
+  padding: 2rem;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+}
+
+.tag-cloud-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  text-decoration: none;
+  border-radius: 25px;
+  border: 2px solid var(--border-color);
+  transition: var(--transition);
+  font-weight: 500;
+}
+
+.tag-cloud-item:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.tag-count {
+  font-size: 0.875rem;
+  opacity: 0.7;
+}
+
+.tag-section {
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tag-section:last-child {
+  border-bottom: none;
+}
+
+.tag-section h2 {
+  color: var(--primary-color);
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+}
+
+.tag-posts {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.tag-post {
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+}
+
+.tag-post:hover {
+  background: var(--bg-tertiary);
+  transform: translateY(-2px);
+}
+
+.tag-post h3 {
+  margin-bottom: 0.5rem;
+}
+
+.tag-post h3 a {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.tag-post h3 a:hover {
+  color: var(--primary-color);
+}
+</style>
+

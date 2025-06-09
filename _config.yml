@@ -1,0 +1,64 @@
+# Site settings
+title: "Rex Rafa's Tech Blog"
+description: "Insights on AWS, DevOps, and AI - Sharing knowledge twice a week"
+baseurl: ""
+url: "https://rexrafa.github.io"
+author: "Rex Rafa"
+email: "your-email@example.com"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Pagination
+paginate: 5
+paginate_path: "/page:num/"
+
+# Collections
+collections:
+  posts:
+    output: true
+    permalink: /:year/:month/:day/:title/
+
+# Default values
+defaults:
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+      author: "Rex Rafa"
+      show_excerpts: true
+
+# Social links
+social:
+  linkedin: "your-linkedin-username"
+  github: "rexrafa"
+
+# Blog settings
+posts_per_page: 10
+excerpt_length: 150
+
+# GitHub Pages settings
+github: [metadata]
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
+
+# Exclude files
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+  - README.md
+
