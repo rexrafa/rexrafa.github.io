@@ -1,0 +1,143 @@
+---
+layout: default
+---
+<article class="post">
+  <header class="post-header">
+    <h1 class="post-title">{{ page.title }}</h1>
+    <div class="post-meta">
+      <time datetime="{{ page.date | date_to_xmlschema }}">
+        {{ page.date | date: "%B %-d, %Y" }}
+      </time>
+      {% if page.author %}
+        • <span class="post-author">{{ page.author }}</span>
+      {% endif %}
+    </div>
+    {% if page.tags.size > 0 %}
+      <div class="post-tags">
+        {% for tag in page.tags %}
+          <a href="{{ site.baseurl }}/tags#{{ tag | slugify }}" class="post-tag">{{ tag }}</a>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </header>
+
+  <div class="post-content">
+    {{ content }}
+  </div>
+
+  <footer class="post-footer">
+    {% include social-sharing.html %}
+    
+    <div class="post-navigation">
+      {% if page.previous.url %}
+        <a class="prev-post" href="{{ page.previous.url }}">&larr; {{ page.previous.title }}</a>
+      {% endif %}
+      {% if page.next.url %}
+        <a class="next-post" href="{{ page.next.url }}">{{ page.next.title }} &rarr;</a>
+      {% endif %}
+    </div>
+  </footer>
+</article>
+
+<style>
+.post {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.post-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.post-title {
+  font-size: 2.5rem;
+  color: #1a1a1a;
+  margin-bottom: 1rem;
+}
+
+.post-meta {
+  color: #6c757d;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.post-tags {
+  margin: 1rem 0;
+}
+
+.post-tag {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  margin: 0.2rem;
+  background: #f8f9fa;
+  border-radius: 20px;
+  color: #495057;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.post-tag:hover {
+  background: #e9ecef;
+  color: #1a1a1a;
+}
+
+.post-content {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #343a40;
+}
+
+.post-content p {
+  margin-bottom: 1.5rem;
+}
+
+.post-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 2rem 0;
+}
+
+.post-navigation {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+}
+
+.prev-post,
+.next-post {
+  color: #007bff;
+  text-decoration: none;
+  max-width: 45%;
+}
+
+.prev-post:hover,
+.next-post:hover {
+  color: #0056b3;
+}
+
+@media (max-width: 768px) {
+  .post {
+    padding: 1rem;
+  }
+
+  .post-title {
+    font-size: 2rem;
+  }
+
+  .post-navigation {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .prev-post,
+  .next-post {
+    max-width: 100%;
+  }
+}
+</style> 

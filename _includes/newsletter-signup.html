@@ -1,0 +1,87 @@
+<div class="newsletter-signup">
+  <div class="newsletter-container">
+    <h2>Subscribe to My Newsletter</h2>
+    <p>Get the latest posts delivered straight to your inbox, twice a week.</p>
+    <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST" class="signup-form">
+      <div class="input-group">
+        <input type="email" name="email" placeholder="Enter your email" required>
+        <button type="submit" class="btn-primary">Subscribe</button>
+      </div>
+      <p class="form-note">No spam, unsubscribe at any time.</p>
+    </form>
+  </div>
+</div>
+
+<style>
+.newsletter-signup {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 3rem 1rem;
+  margin: 2rem 0;
+  border-radius: 12px;
+}
+
+.newsletter-container {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.newsletter-signup h2 {
+  color: #1a1a1a;
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+}
+
+.newsletter-signup p {
+  color: #4a4a4a;
+  margin-bottom: 1.5rem;
+}
+
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.input-group input {
+  flex: 1;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: #0056b3;
+}
+
+.form-note {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+@media (max-width: 768px) {
+  .input-group {
+    flex-direction: column;
+  }
+  
+  .btn-primary {
+    width: 100%;
+  }
+}
+</style> 
