@@ -29,7 +29,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   line-height: 1.6;
   color: var(--text-primary);
   background-color: var(--background-color);
@@ -61,8 +61,10 @@ body {
 }
 
 .site-title {
+  font-family: 'Playfair Display', 'Inter', serif;
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.2px;
   color: var(--primary-color);
   text-decoration: none;
 }
@@ -264,15 +266,16 @@ pre {
 
 /* Typography Improvements */
 h1, h2, h3, h4, h5, h6 {
+  font-family: 'Playfair Display', 'Inter', serif;
   color: var(--primary-color);
   line-height: 1.3;
   margin-top: 2em;
   margin-bottom: 1em;
 }
 
-h1 { font-size: 2.5rem; }
-h2 { font-size: 2rem; }
-h3 { font-size: 1.75rem; }
+h1 { font-size: 2.5rem; letter-spacing: -0.02em; }
+h2 { font-size: 2rem; letter-spacing: -0.015em; }
+h3 { font-size: 1.75rem; letter-spacing: -0.01em; }
 h4 { font-size: 1.5rem; }
 h5 { font-size: 1.25rem; }
 h6 { font-size: 1rem; }
