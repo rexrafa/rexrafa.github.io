@@ -59,22 +59,13 @@
     <div class="certifications">
       <h3>AWS Certifications</h3>
       <div class="certification-badges">
-        <a href="https://www.credly.com/badges/caf74975-32c4-4548-acc2-0f891c67d0ff" target="_blank" class="cert-badge">
-          <img src="https://images.credly.com/size/680x680/images/53acdae5-d69f-4dda-b650-d02ed7a50dd7/image.png" 
-               alt="AWS Certified Security – Specialty" 
-               loading="lazy">
-        </a>
-        <a href="https://www.credly.com/badges/dc2ec615-6ea9-4f96-8795-3f29ce36b51c" target="_blank" class="cert-badge">
-          <img src="https://images.credly.com/size/680x680/images/bd31ef42-d460-493e-8503-39592aaf0458/image.png" 
-               alt="AWS Certified DevOps Engineer – Professional" 
-               loading="lazy">
-        </a>
-        <a href="https://www.credly.com/badges/da30a9cb-f14e-4eea-be51-a97013bd467e" target="_blank" class="cert-badge">
-          <img src="https://images.credly.com/size/680x680/images/2d84e428-9078-49b6-a804-13c15383d0de/image.png" 
-               alt="AWS Certified Solutions Architect – Professional" 
-               loading="lazy">
-        </a>
+        <div data-iframe-width="150" data-iframe-height="270" data-share-badge-id="7b4ebb68-eb0d-45d5-bed0-0d66d964e9d0" data-share-badge-host="https://www.credly.com"></div>
+        <div data-iframe-width="150" data-iframe-height="270" data-share-badge-id="6a46c47f-a937-4611-a4de-b60a82872812" data-share-badge-host="https://www.credly.com"></div>
+        <div data-iframe-width="150" data-iframe-height="270" data-share-badge-id="57688ef1-a783-4e5a-b1ef-ee631d6f86f7" data-share-badge-host="https://www.credly.com"></div>
+        <div data-iframe-width="150" data-iframe-height="270" data-share-badge-id="6d314ba3-26a4-4f24-b1a2-35759ddde0de" data-share-badge-host="https://www.credly.com"></div>
+        <div data-iframe-width="150" data-iframe-height="270" data-share-badge-id="7ca35fbe-f718-4201-bbba-c271b27d5df4" data-share-badge-host="https://www.credly.com"></div>
       </div>
+      <script type="text/javascript" async src="//cdn.credly.com/assets/utilities/embed.js"></script>
     </div>
 
     <div class="expertise">
@@ -168,26 +159,10 @@
 
 .certification-badges {
   display: flex;
-  gap: 1rem;
+  gap: 0.5rem;
   flex-wrap: wrap;
   justify-content: center;
-}
-
-.cert-badge {
-  width: 150px;
-  height: 150px;
-  transition: transform 0.2s ease;
-}
-
-.cert-badge:hover {
-  transform: scale(1.05);
-}
-
-.cert-badge img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  border-radius: 8px;
+  align-items: flex-start;
 }
 
 .expertise {
@@ -276,11 +251,6 @@
 
   .certification-badges {
     justify-content: center;
-  }
-
-  .cert-badge {
-    width: 120px;
-    height: 120px;
   }
 }
 </style>
