@@ -4,14 +4,15 @@ title: "Welcome to My Tech Blog"
 date: 2025-06-09 09:00:00 -0300
 categories: general
 tags: [blog]
-author: Rafael Oliveira
+author: Rafa Oliveira
 ---
 
-Hey there! Welcome to my tech blog. I'm Rafael, a DevOps Engineer passionate about cloud architecture and automation. Here, I'll be sharing insights about AWS, DevOps practices, and emerging technologies.
+Hey there! Welcome to my tech blog. I'm Rafael, a Engineer passionate about cloud architecture and automation. Here, I'll be sharing insights about AWS,DevOps practices, and emerging technologies.
 
 ## What to Expect
 
-Expect bi-weekly posts covering:
+Expect posts covering:
+- GenAI
 - Cloud Architecture & AWS
 - DevOps Best Practices
 - Infrastructure as Code

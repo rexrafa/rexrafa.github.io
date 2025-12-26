@@ -4,7 +4,7 @@ title: "4 Things I Learned Managing a WebSocket Platform at Scale"
 date: 2025-06-09 09:00:00 -0300
 categories: Network
 tags: [aws, network, DNS, EC2, websocket, scalability]
-author: Rafael Oliveira
+author: Rafa Oliveira
 ---
 
 ## Introduction

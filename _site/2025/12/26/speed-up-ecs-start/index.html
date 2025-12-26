@@ -1,4 +1,77 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.5">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2025-12-26T17:30:13-03:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">Rafael Oliveira’s Tech Blog</title><subtitle>Insights on AWS, DevOps, and AI</subtitle><author><name>Rafael Oliveira</name></author><entry><title type="html">Speeding up ECS bootstrap with Seekable OCI (SOCI)</title><link href="http://localhost:4000/2025/12/26/speed-up-ecs-start/" rel="alternate" type="text/html" title="Speeding up ECS bootstrap with Seekable OCI (SOCI)" /><published>2025-12-26T09:00:00-03:00</published><updated>2025-12-26T09:00:00-03:00</updated><id>http://localhost:4000/2025/12/26/speed-up-ecs-start</id><content type="html" xml:base="http://localhost:4000/2025/12/26/speed-up-ecs-start/"><![CDATA[<h2 id="introduction">Introduction</h2>
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Speeding up ECS bootstrap with Seekable OCI (SOCI) | Rafael Oliveira’s Tech Blog</title>
+<meta name="generator" content="Jekyll v3.9.5" />
+<meta property="og:title" content="Speeding up ECS bootstrap with Seekable OCI (SOCI)" />
+<meta name="author" content="Rafa Oliveira" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Introduction" />
+<meta property="og:description" content="Introduction" />
+<link rel="canonical" href="http://localhost:4000/2025/12/26/speed-up-ecs-start/" />
+<meta property="og:url" content="http://localhost:4000/2025/12/26/speed-up-ecs-start/" />
+<meta property="og:site_name" content="Rafael Oliveira’s Tech Blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2025-12-26T09:00:00-03:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Speeding up ECS bootstrap with Seekable OCI (SOCI)" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Rafa Oliveira"},"dateModified":"2025-12-26T09:00:00-03:00","datePublished":"2025-12-26T09:00:00-03:00","description":"Introduction","headline":"Speeding up ECS bootstrap with Seekable OCI (SOCI)","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2025/12/26/speed-up-ecs-start/"},"url":"http://localhost:4000/2025/12/26/speed-up-ecs-start/"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Rafael Oliveira's Tech Blog" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Rafael Oliveira&#39;s Tech Blog</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about.html">About Me</a><a class="page-link" href="/archive/">Archive</a><a class="page-link" href="/tags/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post">
+  <header class="post-header">
+    <h1 class="post-title">Speeding up ECS bootstrap with Seekable OCI (SOCI)</h1>
+    <div class="post-meta">
+      <time datetime="2025-12-26T09:00:00-03:00">
+        December 26, 2025
+      </time>
+      
+        • <span class="post-author">Rafa Oliveira</span>
+      
+    </div>
+    
+      <div class="post-tags">
+        
+          <a href="/tags#aws" class="post-tag">aws</a>
+        
+          <a href="/tags#container" class="post-tag">Container</a>
+        
+          <a href="/tags#ecs" class="post-tag">ECS</a>
+        
+          <a href="/tags#ci-cd" class="post-tag">CI/CD</a>
+        
+          <a href="/tags#ecr" class="post-tag">ECR</a>
+        
+          <a href="/tags#scalability" class="post-tag">scalability</a>
+        
+          <a href="/tags#github-action" class="post-tag">Github Action</a>
+        
+      </div>
+    
+  </header>
+
+  <div class="post-content">
+    <h2 id="introduction">Introduction</h2>
 
 <p>I recently worked on a real-time communication system that needed to scale quickly during user spikes. We did the usual optimizations—tuning health check intervals, keeping images small<strong>, and trimming container startup paths—but task launch time on **AWS Fargate</strong> was still a bottleneck during rapid scale-out.</p>
 
@@ -239,219 +312,254 @@
   <li><a href="https://aws.amazon.com/blogs/containers/improving-amazon-ecs-deployment-consistency-with-soci-index-manifest-v2/">Improving Amazon ECS deployment consistency with SOCI Index Manifest v2</a> — Deep dive into why v2 exists and how it improves consistency</li>
   <li><a href="https://github.com/aws-samples/aws-fargate-seekable-oci-toolbox/tree/main/soci-codepipeline">AWS Fargate SOCI Toolbox</a> — Reference CI/CD pipelines and IaC templates from AWS</li>
   <li><a href="https://medium.com/@ankit.deo/soci-indexes-for-faster-ecs-deployments-with-amazon-ecr-1bd082032244">SOCI Indexes for Faster ECS Deployments</a> — Another practitioner’s walkthrough</li>
-</ul>]]></content><author><name>Rafa Oliveira</name></author><category term="Container" /><category term="aws" /><category term="Container" /><category term="ECS" /><category term="CI/CD" /><category term="ECR" /><category term="scalability" /><category term="Github Action" /><summary type="html"><![CDATA[Introduction]]></summary></entry><entry><title type="html">4 Things I Learned Managing a WebSocket Platform at Scale</title><link href="http://localhost:4000/2025/06/09/websocket-at-scale/" rel="alternate" type="text/html" title="4 Things I Learned Managing a WebSocket Platform at Scale" /><published>2025-06-09T09:00:00-03:00</published><updated>2025-06-09T09:00:00-03:00</updated><id>http://localhost:4000/2025/06/09/websocket-at-scale</id><content type="html" xml:base="http://localhost:4000/2025/06/09/websocket-at-scale/"><![CDATA[<h2 id="introduction">Introduction</h2>
-
-<p>Over the past two years, I’ve managed a real-time platform with WebSocket applications handling more than 8 million open connections and processing over 50,000 RPS.</p>
-
-<p>In this blog post, I want to share 4 key lessons learned while managing this platform. While our infrastructure ran on Kubernetes, these insights apply to any WebSocket deployment on AWS.</p>
-
-<hr />
-
-<h2 id="1-dont-trust-the-aws-ec2-up-to-network-bandwidth">1. Don’t Trust the AWS EC2 “Up to” Network Bandwidth</h2>
-
-<p>When selecting an instance type, you might choose a <code class="language-plaintext highlighter-rouge">c5.2xlarge</code> because it meets your CPU/Memory requirements and advertises “Up to 10 Gbps” network bandwidth. However, AWS documentation clearly states:</p>
-
-<blockquote>
-  <p>Instances marked with “Up to” Network Bandwidth have a baseline bandwidth and can use a network I/O credit mechanism to burst beyond their baseline bandwidth on a best effort basis.</p>
-</blockquote>
-
-<p>This means you shouldn’t expect to sustain 10 Gbps for extended periods.</p>
-
-<h3 id="finding-the-real-baseline">Finding the Real Baseline</h3>
-
-<p>You can check the actual baseline bandwidth using this AWS CLI command:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aws ec2 describe-instance-types <span class="se">\</span>
-    <span class="nt">--filters</span> <span class="s2">"Name=instance-type,Values=c5.*"</span> <span class="se">\</span>
-    <span class="nt">--query</span> <span class="s2">"InstanceTypes[].[InstanceType, NetworkInfo.NetworkPerformance, NetworkInfo.NetworkCards[0].BaselineBandwidthInGbps] | sort_by(@,&amp;[2])"</span> <span class="se">\</span>
-    <span class="nt">--output</span> table
-</code></pre></div></div>
-
-<p>This returns:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>---------------------------------------------
-|           DescribeInstanceTypes           |
-+--------------+--------------------+-------+
-|  c5.large    |  Up to 10 Gigabit  |  0.75 |
-|  c5.xlarge   |  Up to 10 Gigabit  |  1.25 |
-|  c5.2xlarge  |  Up to 10 Gigabit  |  2.5  |
-|  c5.4xlarge  |  Up to 10 Gigabit  |  5.0  |
-|  c5.9xlarge  |  12 Gigabit        |  12.0 |
-|  c5.12xlarge |  12 Gigabit        |  12.0 |
-|  c5.18xlarge |  25 Gigabit        |  25.0 |
-|  c5.24xlarge |  25 Gigabit        |  25.0 |
-|  c5.metal    |  25 Gigabit        |  25.0 |
-+--------------+--------------------+-------+
-</code></pre></div></div>
-
-<p>Notice that a <code class="language-plaintext highlighter-rouge">c5.2xlarge</code> has a real baseline of only 2.5 Gbps instead of the advertised 10 Gbps. Choose instance types based on your actual network requirements.</p>
-
-<p>💡 <strong>Tip</strong>: Consider the <code class="language-plaintext highlighter-rouge">n</code> instance variants (like <code class="language-plaintext highlighter-rouge">c5n</code>) which offer better network bandwidth baselines.</p>
-
-<hr />
-
-<h2 id="2-monitor-ec2-network-throttling">2. Monitor EC2 Network Throttling</h2>
-
-<p>Even with the right instance type, you might see packets being queued or dropped. Use <code class="language-plaintext highlighter-rouge">ethtool</code> to investigate network throttling:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>ethtool <span class="nt">-S</span> eth0 | <span class="nb">grep </span>exceeded
-    bw_in_allowance_exceeded: 5976
-    bw_out_allowance_exceeded: 70727915
-    pps_allowance_exceeded: 3316
-    conntrack_allowance_exceeded: 0
-    linklocal_allowance_exceeded: 0
-</code></pre></div></div>
-
-<h3 id="understanding-the-metrics">Understanding the Metrics</h3>
-
-<ul>
-  <li><strong><code class="language-plaintext highlighter-rouge">bw_in_allowance_exceeded</code></strong>:  High values indicate incoming throttling</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">bw_out_allowance_exceeded</code></strong>: High values indicate egress throttling</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">pps_allowance_exceeded</code></strong>: Too many small packets hitting rate limits</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">conntrack_allowance_exceeded</code></strong>: Connection tracking table full (should be 0)</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">linklocal_allowance_exceeded</code></strong>: Link-local traffic limit exceeded (should be 0)</li>
 </ul>
 
-<p>💡 <strong>Tip</strong>: Monitor these values with CloudWatch and set up alerts. Packet retransmission significantly slows down WebSocket applications.</p>
+  </div>
 
-<hr />
+  <footer class="post-footer">
+    <div class="social-sharing">
+  <h3>Share this post</h3>
+  <div class="share-buttons">
+    <!-- Twitter -->
+    <a href="https://twitter.com/intent/tweet?text=Speeding+up+ECS+bootstrap+with+Seekable+OCI+%28SOCI%29&url=http://localhost:4000/2025/12/26/speed-up-ecs-start/"
+       onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;"
+       class="share-button twitter">
+       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+       </svg>
+       <span>Tweet</span>
+    </a>
 
-<h2 id="3-tune-conntrack-for-long-lived-connections">3. Tune Conntrack for Long-Lived Connections</h2>
+    <!-- LinkedIn -->
+    <a href="https://www.linkedin.com/shareArticle?mini=true&url=http://localhost:4000/2025/12/26/speed-up-ecs-start/&title=Speeding+up+ECS+bootstrap+with+Seekable+OCI+%28SOCI%29&summary=Introduction%0A%0A&source=Rafael Oliveira's Tech Blog"
+       onclick="window.open(this.href, 'linkedin-share', 'width=550,height=435');return false;"
+       class="share-button linkedin">
+       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+         <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+       </svg>
+       <span>Share</span>
+    </a>
 
-<p>WebSocket applications maintain long-lived connections that can exhaust the Linux connection tracking table, causing new connections to be dropped.</p>
+    <!-- Facebook -->
+    <a href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:4000/2025/12/26/speed-up-ecs-start/"
+       onclick="window.open(this.href, 'facebook-share', 'width=550,height=435');return false;"
+       class="share-button facebook">
+       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+         <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
+       </svg>
+       <span>Share</span>
+    </a>
+  </div>
+</div>
 
-<h3 id="check-current-usage">Check Current Usage</h3>
+<style>
+.social-sharing {
+  margin: 2rem 0;
+  text-align: center;
+}
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Current tracked connections</span>
-<span class="nb">cat</span> /proc/sys/net/netfilter/nf_conntrack_count
+.social-sharing h3 {
+  font-size: 1.2rem;
+  color: #343a40;
+  margin-bottom: 1rem;
+}
 
-<span class="c"># Maximum allowed connections  </span>
-<span class="nb">cat</span> /proc/sys/net/netfilter/nf_conntrack_max
+.share-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
 
-<span class="c"># Usage percentage</span>
-<span class="nb">echo</span> <span class="s2">"scale=2; </span><span class="si">$(</span><span class="nb">cat</span> /proc/sys/net/netfilter/nf_conntrack_count<span class="si">)</span><span class="s2"> * 100 / </span><span class="si">$(</span><span class="nb">cat</span> /proc/sys/net/netfilter/nf_conntrack_max<span class="si">)</span><span class="s2">"</span> | bc
-</code></pre></div></div>
+.share-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  text-decoration: none;
+  color: white;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
 
-<h3 id="increase-the-limits-for-high-load-environments">Increase the Limits for High-Load Environments</h3>
+.share-button svg {
+  width: 18px;
+  height: 18px;
+}
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># For high-load WebSocket environments, increase significantly</span>
-<span class="c"># Rule of thumb: 4× expected concurrent connections, considering CPU cores</span>
-<span class="nb">sudo </span>sysctl <span class="nt">-w</span> net.netfilter.nf_conntrack_max<span class="o">=</span>524288
+.twitter {
+  background-color: #1DA1F2;
+}
 
-<span class="c"># Make persistent</span>
-<span class="nb">echo</span> <span class="s2">"net.netfilter.nf_conntrack_max = 524288"</span> | <span class="nb">sudo tee</span> <span class="nt">-a</span> /etc/sysctl.conf
-</code></pre></div></div>
+.twitter:hover {
+  background-color: #0d8ed9;
+}
 
-<h3 id="optimize-for-websocket-applications">Optimize for WebSocket Applications</h3>
+.linkedin {
+  background-color: #0077B5;
+}
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Reduce timeout for established connections (2 hours instead of 5 days)</span>
-<span class="nb">echo</span> <span class="s2">"net.netfilter.nf_conntrack_tcp_timeout_established = 7200"</span> | <span class="nb">sudo tee</span> <span class="nt">-a</span> /etc/sysctl.conf
+.linkedin:hover {
+  background-color: #005e8f;
+}
 
-<span class="c"># Optimize connection cleanup</span>
-<span class="nb">echo</span> <span class="s2">"net.netfilter.nf_conntrack_tcp_timeout_time_wait = 30"</span> | <span class="nb">sudo tee</span> <span class="nt">-a</span> /etc/sysctl.conf
+.facebook {
+  background-color: #4267B2;
+}
 
-<span class="c"># Increase hash table size for better performance with many connections</span>
-<span class="nb">echo</span> <span class="s2">"net.netfilter.nf_conntrack_buckets = 65536"</span> | <span class="nb">sudo tee</span> <span class="nt">-a</span> /etc/sysctl.conf
-</code></pre></div></div>
+.facebook:hover {
+  background-color: #34518d;
+}
 
-<p>💡 <strong>Tip</strong>: Set <code class="language-plaintext highlighter-rouge">nf_conntrack_max</code> based on your instance’s CPU cores and memory. For high-load environments, use: <code class="language-plaintext highlighter-rouge">(CPU cores × 16384)</code> as a starting point, then adjust based on actual usage and available memory.</p>
+@media (max-width: 768px) {
+  .share-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-<hr />
+  .share-button {
+    justify-content: center;
+  }
+}
+</style> 
+    
+    <div class="post-navigation">
+      
+        <a class="prev-post" href="/2025/06/09/welcome-to-my-blog/">&larr; Welcome to My Tech Blog</a>
+      
+      
+    </div>
+  </footer>
+</article>
+<style>
+.post {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
 
-<h2 id="4-avoid-route53-dns-resolution-limits">4. Avoid Route53 DNS Resolution Limits</h2>
+.post-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
 
-<p>Each network interface can only send <a href="https://docs.aws.amazon.com/whitepapers/latest/hybrid-cloud-dns-options-for-vpc/constraints.html#:~:text=Each%20network%20interface%20in%20an,provided%20DNS%20server%20every%20second.">1024 packets per second</a> to the Amazon-provided DNS server. This becomes a bottleneck for applications making frequent external API calls.</p>
+.post-title {
+  font-size: 2.5rem;
+  color: #1a1a1a;
+  margin-bottom: 1rem;
+}
 
-<h3 id="kubernetes-solution">Kubernetes Solution</h3>
+.post-meta {
+  color: #6c757d;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
 
-<p>Deploy <a href="https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/">nodelocaldns</a> to cache DNS queries locally and reduce latency. In high-load environments, it’s recommended to enable <code class="language-plaintext highlighter-rouge">force_tcp</code> to avoid issues caused by dropped or timed-out UDP packets, ensuring more reliable DNS resolution.</p>
+.post-tags {
+  margin: 1rem 0;
+}
 
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">v1</span>
-<span class="na">kind</span><span class="pi">:</span> <span class="s">ConfigMap</span>
-<span class="na">metadata</span><span class="pi">:</span>
-  <span class="na">name</span><span class="pi">:</span> <span class="s">nodelocaldns</span>
-  <span class="na">namespace</span><span class="pi">:</span> <span class="s">kube-system</span>
-<span class="na">data</span><span class="pi">:</span>
-  <span class="na">Corefile</span><span class="pi">:</span> <span class="pi">|</span>
-    <span class="s">cluster.local:53 {</span>
-        <span class="s">errors</span>
-        <span class="s">cache {</span>
-            <span class="s">success 9984 30</span>
-            <span class="s">denial 9984 5</span>
-        <span class="s">}</span>
-        <span class="s">reload</span>
-        <span class="s">loop</span>
-        <span class="s">bind 169.254.20.10</span>
-        <span class="s">forward . __PILLAR__CLUSTER__DNS__ {</span>
-            <span class="s">force_tcp</span>
-        <span class="s">}</span>
-        <span class="s">prometheus :9253</span>
-        <span class="s">health 169.254.20.10:8080</span>
-    <span class="s">}</span>
-</code></pre></div></div>
+.post-tag {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  margin: 0.2rem;
+  background: #f8f9fa;
+  border-radius: 20px;
+  color: #495057;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
 
-<h3 id="ec2-instance-solution">EC2 Instance Solution</h3>
+.post-tag:hover {
+  background: #e9ecef;
+  color: #1a1a1a;
+}
 
-<p>Set up a local DNS cache using bind9:</p>
+.post-content {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #343a40;
+}
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Install bind9</span>
-<span class="nb">sudo </span>yum <span class="nb">install</span> <span class="nt">-y</span> <span class="nb">bind </span>bind-utils
+.post-content p {
+  margin-bottom: 1.5rem;
+}
 
-<span class="c"># Configure as caching nameserver</span>
-<span class="nb">sudo tee</span> /etc/named.conf <span class="o">&lt;&lt;</span> <span class="no">EOF</span><span class="sh">
-options {
-    listen-on port 53 { 127.0.0.1; };
-    directory "/var/named";
-    recursion yes;
-    allow-query { localhost; };
-    forwarders { 169.254.169.253; };
-    forward only;
-};
-</span><span class="no">EOF
+.post-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 2rem 0;
+}
 
-</span><span class="c"># Update /etc/resolv.conf</span>
-<span class="nb">echo</span> <span class="s2">"nameserver 127.0.0.1"</span> | <span class="nb">sudo tee</span> /etc/resolv.conf
+.post-navigation {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+}
 
-<span class="c"># Start and enable bind</span>
-<span class="nb">sudo </span>systemctl start named
-<span class="nb">sudo </span>systemctl <span class="nb">enable </span>named
-</code></pre></div></div>
+.prev-post,
+.next-post {
+  color: #007bff;
+  text-decoration: none;
+  max-width: 45%;
+}
 
-<p>💡 <strong>Tip</strong>: Monitor DNS query patterns and cache hit rates to optimize your caching strategy.</p>
+.prev-post:hover,
+.next-post:hover {
+  color: #0056b3;
+}
 
-<hr />
+@media (max-width: 768px) {
+  .post {
+    padding: 1rem;
+  }
 
-<h2 id="conclusion">Conclusion</h2>
+  .post-title {
+    font-size: 2rem;
+  }
 
-<p>Managing WebSocket applications at scale requires understanding these AWS networking limitations:</p>
+  .post-navigation {
+    flex-direction: column;
+    gap: 1rem;
+  }
 
-<ol>
-  <li><strong>Know your real network capacity</strong> - Don’t rely on “up to” bandwidth specifications</li>
-  <li><strong>Monitor network throttling</strong> - Use <code class="language-plaintext highlighter-rouge">ethtool</code> and set up CloudWatch alerts</li>
-  <li><strong>Tune conntrack for long-lived connections</strong> - Scale limits based on connection patterns</li>
-  <li><strong>Implement DNS caching</strong> - Avoid Route53 rate limits with local DNS caching</li>
-</ol>
+  .prev-post,
+  .next-post {
+    max-width: 100%;
+  }
+}
+</style> 
 
-<p>These optimizations helped us maintain stable performance with 8M+ concurrent connections during traffic spikes. Always test these changes in staging environments that mirror your production load.</p>
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
 
-<hr />
+  <div class="wrapper">
 
-<p>In my next post I’ll talk about the challenges of scaling up and down this environment.</p>
+    <h2 class="footer-heading">Rafael Oliveira&#39;s Tech Blog</h2>
 
-<p><em>Have you encountered similar challenges scaling WebSocket applications? Share your experiences in the comments below.</em></p>
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Rafael Oliveira</li><li><a class="u-email" href="mailto:rafavinicius67@gmail.com">rafavinicius67@gmail.com</a></li></ul>
+      </div>
 
-<p><em>This blog was written by :brain: + :robot_face:</em></p>]]></content><author><name>Rafa Oliveira</name></author><category term="Network" /><category term="aws" /><category term="network" /><category term="DNS" /><category term="EC2" /><category term="websocket" /><category term="scalability" /><summary type="html"><![CDATA[Introduction]]></summary></entry><entry><title type="html">Welcome to My Tech Blog</title><link href="http://localhost:4000/2025/06/09/welcome-to-my-blog/" rel="alternate" type="text/html" title="Welcome to My Tech Blog" /><published>2025-06-09T09:00:00-03:00</published><updated>2025-06-09T09:00:00-03:00</updated><id>http://localhost:4000/2025/06/09/welcome-to-my-blog</id><content type="html" xml:base="http://localhost:4000/2025/06/09/welcome-to-my-blog/"><![CDATA[<p>Hey there! Welcome to my tech blog. I’m Rafael, a Engineer passionate about cloud architecture and automation. Here, I’ll be sharing insights about AWS,DevOps practices, and emerging technologies.</p>
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
 
-<h2 id="what-to-expect">What to Expect</h2>
+      <div class="footer-col footer-col-3">
+        <p>Insights on AWS, DevOps, and AI</p>
+      </div>
+    </div>
 
-<p>Expect posts covering:</p>
-<ul>
-  <li>GenAI</li>
-  <li>Cloud Architecture &amp; AWS</li>
-  <li>DevOps Best Practices</li>
-  <li>Infrastructure as Code</li>
-  <li>Kubernetes &amp; Containerization</li>
-  <li>Performance Optimization</li>
-  <li>Security in the Cloud</li>
-</ul>
+  </div>
 
-<p>Follow me on <a href="https://linkedin.com/in/rafavinicius">LinkedIn</a> for more tech insights and updates. Looking forward to sharing knowledge and experiences with you!</p>]]></content><author><name>Rafa Oliveira</name></author><category term="general" /><category term="blog" /><summary type="html"><![CDATA[Hey there! Welcome to my tech blog. I’m Rafael, a Engineer passionate about cloud architecture and automation. Here, I’ll be sharing insights about AWS,DevOps practices, and emerging technologies.]]></summary></entry></feed>
+</footer>
+</body>
+
+</html>
