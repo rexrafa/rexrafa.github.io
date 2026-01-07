@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Speeding up ECS bootstrap with Seekable OCI (SOCI)"
+title: "Speeding up ECS taks startup with Seekable OCI (SOCI)"
 date: 2025-12-26 09:00:00 -0300
 categories: Container
 tags: [aws, Container, ECS, CI/CD, ECR, scalability, Github Action]
@@ -8,9 +8,9 @@ author: Rafa Oliveira
 ---
 ## Introduction
 
-I recently worked on a real-time communication system that needed to scale quickly during user spikes. We did the usual optimizations—tuning health check intervals, keeping images small**, and trimming container startup paths—but task launch time on **AWS Fargate** was still a bottleneck during rapid scale-out.
+I recently worked on a real-time communication system that needed to scale quickly during user spikes. We did the usual optimizations—tuning health check intervals, keeping the image small, and trimming container startup paths, but task launch time on **AWS Fargate** was still a bottleneck during rapid scale-out.
 
-That’s when I found **Seekable OCI (SOCI)**: a way to *lazy load* container images so a task can start before the full image is downloaded. In this post, I’ll focus on the practical part: how to generate and ship SOCI artifacts reliably in CI/CD (with multi-arch images), and a couple of sharp edges I hit along the way.
+That’s when I found **Seekable OCI (SOCI)**: a way to *lazy load* container images, so a task can start before the full image is downloaded. In this post, I’ll focus on the practical part: how to generate and ship SOCI artifacts reliably in CI/CD (with multi-arch images), and a couple of sharp edges I hit along the way.
 
 ---
 ## Where SOCI helps in the ECS task lifecycle
@@ -219,7 +219,7 @@ jobs:
 
           # Generate SOCI index manifest v2 (requires SOCI v0.10+)
           # This creates an OCI index that ties the image + SOCI index together.
-          sudo soci convert "${IMAGE}" "${IMAGE_SOCI}"
+          sudo soci convert --all-platforms "${IMAGE}" "${IMAGE_SOCI}"
 
           # Push the final tag. This publishes the image index plus related manifests/artifacts.
           sudo -E ctr images push --user "AWS:${ECR_PASSWORD}" "${IMAGE_SOCI}"
