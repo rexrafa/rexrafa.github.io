@@ -1,4 +1,77 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.5">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2026-03-09T21:20:14-03:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">Rafa Oliveira’s Tech Blog</title><subtitle>Insights on AWS, DevOps, and AI</subtitle><author><name>Rafael Oliveira</name></author><entry><title type="html">Scaling Private Key Operations Across a Fleet of AWS Nitro Enclaves</title><link href="http://localhost:4000/2026/03/09/nitro-enclave-kms/" rel="alternate" type="text/html" title="Scaling Private Key Operations Across a Fleet of AWS Nitro Enclaves" /><published>2026-03-09T09:00:00-03:00</published><updated>2026-03-09T09:00:00-03:00</updated><id>http://localhost:4000/2026/03/09/nitro-enclave-kms</id><content type="html" xml:base="http://localhost:4000/2026/03/09/nitro-enclave-kms/"><![CDATA[<p>Recently I was working on a project where we needed to use AWS Nitro Enclaves as a Trusted Execution Environment (TEE) to handle highly sensitive cryptographic keys. The challenge was straightforward to describe but tricky to solve: we needed an asymmetric key pair that multiple enclave instances could share for encrypting and decrypting files, but the private key could <strong>never</strong> be accessible outside the enclave – not to the host machine, not to operators, not to anyone.</p>
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Scaling Private Key Operations Across a Fleet of AWS Nitro Enclaves | Rafa Oliveira’s Tech Blog</title>
+<meta name="generator" content="Jekyll v3.9.5" />
+<meta property="og:title" content="Scaling Private Key Operations Across a Fleet of AWS Nitro Enclaves" />
+<meta name="author" content="Rafa Oliveira" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Recently I was working on a project where we needed to use AWS Nitro Enclaves as a Trusted Execution Environment (TEE) to handle highly sensitive cryptographic keys. The challenge was straightforward to describe but tricky to solve: we needed an asymmetric key pair that multiple enclave instances could share for encrypting and decrypting files, but the private key could never be accessible outside the enclave – not to the host machine, not to operators, not to anyone." />
+<meta property="og:description" content="Recently I was working on a project where we needed to use AWS Nitro Enclaves as a Trusted Execution Environment (TEE) to handle highly sensitive cryptographic keys. The challenge was straightforward to describe but tricky to solve: we needed an asymmetric key pair that multiple enclave instances could share for encrypting and decrypting files, but the private key could never be accessible outside the enclave – not to the host machine, not to operators, not to anyone." />
+<link rel="canonical" href="http://localhost:4000/2026/03/09/nitro-enclave-kms/" />
+<meta property="og:url" content="http://localhost:4000/2026/03/09/nitro-enclave-kms/" />
+<meta property="og:site_name" content="Rafa Oliveira’s Tech Blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2026-03-09T09:00:00-03:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Scaling Private Key Operations Across a Fleet of AWS Nitro Enclaves" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Rafa Oliveira"},"dateModified":"2026-03-09T09:00:00-03:00","datePublished":"2026-03-09T09:00:00-03:00","description":"Recently I was working on a project where we needed to use AWS Nitro Enclaves as a Trusted Execution Environment (TEE) to handle highly sensitive cryptographic keys. The challenge was straightforward to describe but tricky to solve: we needed an asymmetric key pair that multiple enclave instances could share for encrypting and decrypting files, but the private key could never be accessible outside the enclave – not to the host machine, not to operators, not to anyone.","headline":"Scaling Private Key Operations Across a Fleet of AWS Nitro Enclaves","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2026/03/09/nitro-enclave-kms/"},"url":"http://localhost:4000/2026/03/09/nitro-enclave-kms/"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Rafa Oliveira's Tech Blog" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Rafa Oliveira&#39;s Tech Blog</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about.html">About Me</a><a class="page-link" href="/archive/">Archive</a><a class="page-link" href="/tags/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post">
+  <header class="post-header">
+    <h1 class="post-title">Scaling Private Key Operations Across a Fleet of AWS Nitro Enclaves</h1>
+    <div class="post-meta">
+      <time datetime="2026-03-09T09:00:00-03:00">
+        March 9, 2026
+      </time>
+      
+        • <span class="post-author">Rafa Oliveira</span>
+      
+    </div>
+    
+      <div class="post-tags">
+        
+          <a href="/tags#aws" class="post-tag">aws</a>
+        
+          <a href="/tags#security" class="post-tag">security</a>
+        
+          <a href="/tags#nitro-enclaves" class="post-tag">Nitro Enclaves</a>
+        
+          <a href="/tags#kms" class="post-tag">KMS</a>
+        
+          <a href="/tags#cryptography" class="post-tag">cryptography</a>
+        
+          <a href="/tags#tee" class="post-tag">TEE</a>
+        
+          <a href="/tags#encryption" class="post-tag">encryption</a>
+        
+      </div>
+    
+  </header>
+
+  <div class="post-content">
+    <p>Recently I was working on a project where we needed to use AWS Nitro Enclaves as a Trusted Execution Environment (TEE) to handle highly sensitive cryptographic keys. The challenge was straightforward to describe but tricky to solve: we needed an asymmetric key pair that multiple enclave instances could share for encrypting and decrypting files, but the private key could <strong>never</strong> be accessible outside the enclave – not to the host machine, not to operators, not to anyone.</p>
 
 <p>This post walks through the concepts and architecture I used to solve this problem, from the fundamentals of TEEs and Nitro Enclaves to a concrete pattern for generating, distributing, and recovering encryption keys across a fleet of enclaves.</p>
 
@@ -607,460 +680,268 @@ nitro-cli build-enclave <span class="se">\</span>
       <td><a href="https://github.com/aws/aws-nitro-enclaves-samples/blob/main/att_doc_retriever_sample/README.md">att_doc_retriever_sample on GitHub</a></td>
     </tr>
   </tbody>
-</table>]]></content><author><name>Rafa Oliveira</name></author><category term="Security" /><category term="aws" /><category term="security" /><category term="Nitro Enclaves" /><category term="KMS" /><category term="cryptography" /><category term="TEE" /><category term="encryption" /><summary type="html"><![CDATA[Recently I was working on a project where we needed to use AWS Nitro Enclaves as a Trusted Execution Environment (TEE) to handle highly sensitive cryptographic keys. The challenge was straightforward to describe but tricky to solve: we needed an asymmetric key pair that multiple enclave instances could share for encrypting and decrypting files, but the private key could never be accessible outside the enclave – not to the host machine, not to operators, not to anyone.]]></summary></entry><entry><title type="html">Speeding up ECS taks startup with Seekable OCI (SOCI)</title><link href="http://localhost:4000/2025/12/26/speed-up-ecs-start/" rel="alternate" type="text/html" title="Speeding up ECS taks startup with Seekable OCI (SOCI)" /><published>2025-12-26T09:00:00-03:00</published><updated>2025-12-26T09:00:00-03:00</updated><id>http://localhost:4000/2025/12/26/speed-up-ecs-start</id><content type="html" xml:base="http://localhost:4000/2025/12/26/speed-up-ecs-start/"><![CDATA[<h2 id="introduction">Introduction</h2>
-
-<p>I recently worked on a real-time communication system that needed to scale quickly during user spikes. We did the usual optimizations—tuning health check intervals, keeping the image small, and trimming container startup paths, but task launch time on <strong>AWS Fargate</strong> was still a bottleneck during rapid scale-out.</p>
-
-<p>That’s when I found <strong>Seekable OCI (SOCI)</strong>: a way to <em>lazy load</em> container images, so a task can start before the full image is downloaded. In this post, I’ll focus on the practical part: how to generate and ship SOCI artifacts reliably in CI/CD (with multi-arch images), and a couple of sharp edges I hit along the way.</p>
-
-<hr />
-<h2 id="where-soci-helps-in-the-ecs-task-lifecycle">Where SOCI helps in the ECS task lifecycle</h2>
-
-<p>If you look at the ECS task lifecycle, the part we care about is <code class="language-plaintext highlighter-rouge">ACTIVATING</code>, where the image is pulled from ECR and the container is started (<a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-lifecycle-explanation.html">ECS task lifecycle docs</a>).</p>
-
-<p>With SOCI, the platform can start the container sooner by fetching only the pieces of the image needed for startup. AWS has a great deep dive on how it works under the hood:</p>
-<ul>
-  <li>Lazy loading on Fargate: <a href="https://aws.amazon.com/blogs/containers/under-the-hood-lazy-loading-container-images-with-seekable-oci-and-aws-fargate/">Under the hood: lazy loading container images with SOCI and AWS Fargate</a></li>
-</ul>
-
-<p>In my case, this reduced scale-out latency by ~40% (your results will vary based on image size and what your app touches at boot).</p>
-
-<hr />
-<h2 id="soci-index-manifests-v1-vs-v2-and-why-v2-matters">SOCI index manifests: v1 vs v2 (and why v2 matters)</h2>
-
-<p>Before diving into the implementation, it’s worth understanding why there are two versions of SOCI index manifests—and why <strong>this post focuses exclusively on v2</strong>.</p>
-
-<p><strong>SOCI v1</strong> stored the SOCI index as a <em>separate artifact</em> loosely coupled to the container image. This could cause inconsistent deployments: during a rollout, some tasks might lazy load while others fell back to full image downloads if the index was missing or out of sync.</p>
-
-<p><strong>SOCI v2</strong> solves this by binding the image and its SOCI index together via an OCI image index. This improves deployment consistency and makes replication/lifecycle management more reliable. For new implementations, v2 is the clear choice.</p>
-
-<p>AWS has a detailed write-up on the differences:</p>
-<ul>
-  <li><a href="https://aws.amazon.com/blogs/containers/improving-amazon-ecs-deployment-consistency-with-soci-index-manifest-v2/">Improving Amazon ECS deployment consistency with SOCI Index Manifest v2</a></li>
-</ul>
-
-<p>Key requirements for v2:</p>
-<ul>
-  <li><strong>SOCI CLI v0.10+</strong> (we use v0.12.1 in this post)</li>
-  <li><strong>AWS Fargate platform version 1.4.0+</strong></li>
-  <li>Generating a SOCI v2 artifact updates the <em>image manifest</em> with annotations, so you’ll see a new image digest even though the filesystem layers don’t change</li>
-</ul>
-
-<hr />
-<h2 id="cicd-workflow-github-actions-for-multi-arch-images--soci">CI/CD workflow (GitHub Actions) for multi-arch images + SOCI</h2>
-
-<p>My goal was to support <strong>linux/amd64</strong> and <strong>linux/arm64</strong> with one pipeline. Docker Buildx makes multi-platform builds straightforward, but the SOCI CLI operates on images in a <strong>containerd</strong> image store—so you typically end up with this flow:</p>
-
-<pre><code class="language-mermaid">flowchart TD
-    A[GitHub Actions Workflow] --&gt; B[Checkout source]
-    B --&gt; C[Configure AWS credentials]
-    C --&gt; D[Login to Amazon ECR]
-    D --&gt; E[Build multi-arch image]
-    E --&gt; F[Import into containerd]
-    F --&gt; G[Generate SOCI artifact]
-    G --&gt; H[Push to ECR]
-    H --&gt; I[Deploy to ECS]
-</code></pre>
-
-<p>If you want a working reference implementation, AWS provides an end-to-end toolbox (including CI/CD examples):</p>
-<ul>
-  <li>https://github.com/aws-samples/aws-fargate-seekable-oci-toolbox/tree/main/soci-codepipeline</li>
-</ul>
-
-<hr />
-<h2 id="the-why-do-i-need-containerdctr-part">The “why do I need containerd/ctr?” part</h2>
-
-<p>The SOCI CLI works with images stored in containerd. In GitHub Actions, that usually means:</p>
-<ul>
-  <li>Set up containerd</li>
-  <li>Build the image with Buildx to an OCI archive (<code class="language-plaintext highlighter-rouge">type=oci,dest=...</code>)</li>
-  <li>Import the archive into containerd with <code class="language-plaintext highlighter-rouge">ctr</code></li>
-  <li>Generate the SOCI artifact from the containerd image store</li>
-  <li>Push the result to ECR</li>
-</ul>
-
-<hr />
-<h2 id="a-common-auth-pitfall-with-ecr-credentials">A common auth pitfall with ECR credentials</h2>
-
-<p>If you’re following older SOCI examples (based on v1), you might see <code class="language-plaintext highlighter-rouge">soci push</code> used to push the SOCI artifact separately. With <strong>SOCI v2</strong>, this isn’t necessary—<code class="language-plaintext highlighter-rouge">soci convert</code> creates a unified image index, and you push everything with <code class="language-plaintext highlighter-rouge">ctr images push</code>.</p>
-
-<p>However, I initially hit credential errors like:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>soci: failed to fetch list of referrers: ... basic credential not found
-</code></pre></div></div>
-
-<p>The fix was ensuring <code class="language-plaintext highlighter-rouge">aws-actions/amazon-ecr-login@v2</code> runs before any SOCI operations:</p>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Login to Amazon ECR</span>
-  <span class="na">uses</span><span class="pi">:</span> <span class="s">aws-actions/amazon-ecr-login@v2</span>
-</code></pre></div></div>
-
-<p>This action writes valid ECR credentials to <code class="language-plaintext highlighter-rouge">~/.docker/config.json</code>. Even though <code class="language-plaintext highlighter-rouge">ctr images push</code> accepts explicit <code class="language-plaintext highlighter-rouge">--user</code> flags, the SOCI CLI queries the registry during <code class="language-plaintext highlighter-rouge">soci convert</code> and relies on Docker credential helpers. Once the ECR login action runs, everything “just works.”</p>
-
-<hr />
-<h2 id="a-minimal-github-actions-example-buildx--containerd--soci-v2--ecr">A minimal GitHub Actions example (Buildx → containerd → SOCI v2 → ECR)</h2>
-
-<p>Below is a simplified version of the pipeline that worked reliably for me using <strong>SOCI index manifest v2</strong> via <strong><code class="language-plaintext highlighter-rouge">soci convert</code></strong>. It’s designed as a reusable workflow—you pass in your ECR registry, repository name, and image tag.</p>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">name</span><span class="pi">:</span> <span class="s2">"</span><span class="s">[Reusable]:</span><span class="nv"> </span><span class="s">ECR</span><span class="nv"> </span><span class="s">Build</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Push</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">SOCI"</span>
-
-<span class="na">on</span><span class="pi">:</span>
-  <span class="na">workflow_call</span><span class="pi">:</span>
-    <span class="na">inputs</span><span class="pi">:</span>
-      <span class="na">checkout_ref</span><span class="pi">:</span>
-        <span class="na">description</span><span class="pi">:</span> <span class="s2">"</span><span class="s">Git</span><span class="nv"> </span><span class="s">ref</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">checkout</span><span class="nv"> </span><span class="s">(branch,</span><span class="nv"> </span><span class="s">tag,</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">SHA)"</span>
-        <span class="na">required</span><span class="pi">:</span> <span class="no">true</span>
-        <span class="na">type</span><span class="pi">:</span> <span class="s">string</span>
-      <span class="na">aws_region</span><span class="pi">:</span>
-        <span class="na">description</span><span class="pi">:</span> <span class="s2">"</span><span class="s">AWS</span><span class="nv"> </span><span class="s">region"</span>
-        <span class="na">required</span><span class="pi">:</span> <span class="no">true</span>
-        <span class="na">type</span><span class="pi">:</span> <span class="s">string</span>
-      <span class="na">ecr_registry</span><span class="pi">:</span>
-        <span class="na">description</span><span class="pi">:</span> <span class="s2">"</span><span class="s">ECR</span><span class="nv"> </span><span class="s">registry,</span><span class="nv"> </span><span class="s">e.g.</span><span class="nv"> </span><span class="s">123.dkr.ecr.us-east-1.amazonaws.com"</span>
-        <span class="na">required</span><span class="pi">:</span> <span class="no">true</span>
-        <span class="na">type</span><span class="pi">:</span> <span class="s">string</span>
-      <span class="na">ecr_repository</span><span class="pi">:</span>
-        <span class="na">description</span><span class="pi">:</span> <span class="s2">"</span><span class="s">ECR</span><span class="nv"> </span><span class="s">repository</span><span class="nv"> </span><span class="s">name"</span>
-        <span class="na">required</span><span class="pi">:</span> <span class="no">true</span>
-        <span class="na">type</span><span class="pi">:</span> <span class="s">string</span>
-      <span class="na">image_tag</span><span class="pi">:</span>
-        <span class="na">description</span><span class="pi">:</span> <span class="s2">"</span><span class="s">Tag</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">apply</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">image</span><span class="nv"> </span><span class="s">(usually</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">SHA)"</span>
-        <span class="na">required</span><span class="pi">:</span> <span class="no">true</span>
-        <span class="na">type</span><span class="pi">:</span> <span class="s">string</span>
-      <span class="na">context</span><span class="pi">:</span>
-        <span class="na">description</span><span class="pi">:</span> <span class="s2">"</span><span class="s">Docker</span><span class="nv"> </span><span class="s">build</span><span class="nv"> </span><span class="s">context"</span>
-        <span class="na">required</span><span class="pi">:</span> <span class="no">false</span>
-        <span class="na">default</span><span class="pi">:</span> <span class="s2">"</span><span class="s">./"</span>
-        <span class="na">type</span><span class="pi">:</span> <span class="s">string</span>
-      <span class="na">dockerfile</span><span class="pi">:</span>
-        <span class="na">description</span><span class="pi">:</span> <span class="s2">"</span><span class="s">Dockerfile</span><span class="nv"> </span><span class="s">path"</span>
-        <span class="na">required</span><span class="pi">:</span> <span class="no">false</span>
-        <span class="na">default</span><span class="pi">:</span> <span class="s2">"</span><span class="s">./Dockerfile"</span>
-        <span class="na">type</span><span class="pi">:</span> <span class="s">string</span>
-      <span class="na">platforms</span><span class="pi">:</span>
-        <span class="na">description</span><span class="pi">:</span> <span class="s2">"</span><span class="s">Comma-separated</span><span class="nv"> </span><span class="s">target</span><span class="nv"> </span><span class="s">platforms"</span>
-        <span class="na">required</span><span class="pi">:</span> <span class="no">false</span>
-        <span class="na">default</span><span class="pi">:</span> <span class="s2">"</span><span class="s">linux/amd64,linux/arm64"</span>
-        <span class="na">type</span><span class="pi">:</span> <span class="s">string</span>
-      <span class="na">soci_release</span><span class="pi">:</span>
-        <span class="na">description</span><span class="pi">:</span> <span class="s2">"</span><span class="s">SOCI</span><span class="nv"> </span><span class="s">CLI</span><span class="nv"> </span><span class="s">release"</span>
-        <span class="na">required</span><span class="pi">:</span> <span class="no">false</span>
-        <span class="na">default</span><span class="pi">:</span> <span class="s2">"</span><span class="s">v0.12.1"</span>
-        <span class="na">type</span><span class="pi">:</span> <span class="s">string</span>
-    <span class="na">secrets</span><span class="pi">:</span>
-      <span class="na">role_to_assume</span><span class="pi">:</span>
-        <span class="na">required</span><span class="pi">:</span> <span class="no">true</span>
-    <span class="na">outputs</span><span class="pi">:</span>
-      <span class="na">image_uri</span><span class="pi">:</span>
-        <span class="na">description</span><span class="pi">:</span> <span class="s2">"</span><span class="s">Full</span><span class="nv"> </span><span class="s">image</span><span class="nv"> </span><span class="s">URI</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">SHA</span><span class="nv"> </span><span class="s">tag"</span>
-        <span class="na">value</span><span class="pi">:</span> <span class="s">$</span>
-
-<span class="na">permissions</span><span class="pi">:</span>
-  <span class="na">id-token</span><span class="pi">:</span> <span class="s">write</span>
-  <span class="na">contents</span><span class="pi">:</span> <span class="s">read</span>
-
-<span class="na">jobs</span><span class="pi">:</span>
-  <span class="na">build</span><span class="pi">:</span>
-    <span class="na">runs-on</span><span class="pi">:</span> <span class="s">ubuntu-latest</span>
-    <span class="na">outputs</span><span class="pi">:</span>
-      <span class="na">image</span><span class="pi">:</span> <span class="s">$</span>
-      <span class="na">image_base</span><span class="pi">:</span> <span class="s">$</span>
-    <span class="na">steps</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/checkout@v5</span>
-        <span class="na">with</span><span class="pi">:</span>
-          <span class="na">ref</span><span class="pi">:</span> <span class="s">$</span>
-
-      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Configure AWS credentials using OIDC</span>
-        <span class="na">uses</span><span class="pi">:</span> <span class="s">aws-actions/configure-aws-credentials@v4</span>
-        <span class="na">with</span><span class="pi">:</span>
-          <span class="na">role-to-assume</span><span class="pi">:</span> <span class="s">$</span>
-          <span class="na">aws-region</span><span class="pi">:</span> <span class="s">$</span>
-
-      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Login to Amazon ECR</span>
-        <span class="na">id</span><span class="pi">:</span> <span class="s">login-ecr</span>
-        <span class="na">uses</span><span class="pi">:</span> <span class="s">aws-actions/amazon-ecr-login@v2</span>
-
-      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Set up containerd</span>
-        <span class="na">uses</span><span class="pi">:</span> <span class="s">crazy-max/ghaction-setup-containerd@v3</span>
-
-      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Install soci cli</span>
-        <span class="na">uses</span><span class="pi">:</span> <span class="s">lerentis/soci-installer@v1.1.0</span>
-        <span class="na">with</span><span class="pi">:</span>
-          <span class="na">soci-release</span><span class="pi">:</span> <span class="s">$</span>
-          <span class="na">install-dir</span><span class="pi">:</span> <span class="s">/usr/local/bin</span>
-
-      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Set up Docker Buildx</span>
-        <span class="na">uses</span><span class="pi">:</span> <span class="s">docker/setup-buildx-action@v3</span>
-
-      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Determine tags</span>
-        <span class="na">id</span><span class="pi">:</span> <span class="s">tag-definition</span>
-        <span class="na">shell</span><span class="pi">:</span> <span class="s">bash</span>
-        <span class="na">run</span><span class="pi">:</span> <span class="pi">|</span>
-          <span class="s">set -euo pipefail</span>
-
-          <span class="s">IMAGE_BASE="$/$"</span>
-          <span class="s">IMAGE="${IMAGE_BASE}:$"</span>
-
-          <span class="s">echo "image=${IMAGE}" &gt;&gt; "$GITHUB_OUTPUT"</span>
-          <span class="s">echo "image_base=${IMAGE_BASE}" &gt;&gt; "$GITHUB_OUTPUT"</span>
-
-      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Build image (OCI tar)</span>
-        <span class="na">uses</span><span class="pi">:</span> <span class="s">docker/build-push-action@v6</span>
-        <span class="na">with</span><span class="pi">:</span>
-          <span class="na">context</span><span class="pi">:</span> <span class="s">$</span>
-          <span class="na">file</span><span class="pi">:</span> <span class="s">$</span>
-          <span class="na">platforms</span><span class="pi">:</span> <span class="s">$</span>
-          <span class="na">push</span><span class="pi">:</span> <span class="no">false</span>
-          <span class="na">outputs</span><span class="pi">:</span> <span class="s">type=oci,dest=/tmp/image.tar</span>
-          <span class="na">tags</span><span class="pi">:</span> <span class="s2">"</span><span class="s">$:local-build"</span>
-          <span class="na">cache-from</span><span class="pi">:</span> <span class="s">type=gha</span>
-          <span class="na">cache-to</span><span class="pi">:</span> <span class="s">type=gha,mode=max</span>
-
-      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Create and push Image and SOCI indexes to ECR</span>
-        <span class="na">run</span><span class="pi">:</span> <span class="pi">|</span>
-          <span class="s">ECR_PASSWORD=$(aws ecr get-login-password --region "$")</span>
-          <span class="s">IMAGE="$:local-build"</span>
-          <span class="s">IMAGE_SOCI="$"</span>
-
-          <span class="s">sudo ctr i import --base-name "${IMAGE}" --digests --all-platforms /tmp/image.tar</span>
-
-          <span class="s"># Generate SOCI index manifest v2 (requires SOCI v0.10+)</span>
-          <span class="s"># This creates an OCI index that ties the image + SOCI index together.</span>
-          <span class="s">sudo soci convert --all-platforms "${IMAGE}" "${IMAGE_SOCI}"</span>
-
-          <span class="s"># Push the final tag. This publishes the image index plus related manifests/artifacts.</span>
-          <span class="s">sudo -E ctr images push --user "AWS:${ECR_PASSWORD}" "${IMAGE_SOCI}"</span>
-</code></pre></div></div>
-
-<p>After pushing, reference the final image tag in your ECS task definition. There are no extra flags to “enable” SOCI—Fargate automatically uses lazy loading when the image has a SOCI artifact attached. See the <a href="https://aws.amazon.com/blogs/containers/improving-amazon-ecs-deployment-consistency-with-soci-index-manifest-v2/">AWS v2 blog post</a> for details on how Fargate detects and uses SOCI indexes.</p>
-
-<hr />
-<h2 id="closing-thoughts">Closing thoughts</h2>
-
-<p>SOCI was a “low-effort, high-impact” improvement for my workload: no application code changes, but noticeably faster task readiness during scale-out.</p>
-
-<p>If you’re evaluating it, I’d start by ensuring you’re on <strong>SOCI index manifest v2</strong> and validating your workload on the Fargate platform version you run today. From there, the main work is getting CI/CD to build multi-arch images, run SOCI generation in a containerd image store, and push the right artifact to ECR.</p>
-
-<hr />
-<h2 id="further-reading">Further reading</h2>
-
-<ul>
-  <li><a href="https://aws.amazon.com/blogs/containers/improving-amazon-ecs-deployment-consistency-with-soci-index-manifest-v2/">Improving Amazon ECS deployment consistency with SOCI Index Manifest v2</a> — Deep dive into why v2 exists and how it improves consistency</li>
-  <li><a href="https://github.com/aws-samples/aws-fargate-seekable-oci-toolbox/tree/main/soci-codepipeline">AWS Fargate SOCI Toolbox</a> — Reference CI/CD pipelines and IaC templates from AWS</li>
-  <li><a href="https://medium.com/@ankit.deo/soci-indexes-for-faster-ecs-deployments-with-amazon-ecr-1bd082032244">SOCI Indexes for Faster ECS Deployments</a> — Another practitioner’s walkthrough</li>
-</ul>]]></content><author><name>Rafa Oliveira</name></author><category term="Container" /><category term="aws" /><category term="Container" /><category term="ECS" /><category term="CI/CD" /><category term="ECR" /><category term="scalability" /><category term="Github Action" /><summary type="html"><![CDATA[Introduction]]></summary></entry><entry><title type="html">4 Things I Learned Managing a WebSocket Platform at Scale</title><link href="http://localhost:4000/2025/06/09/websocket-at-scale/" rel="alternate" type="text/html" title="4 Things I Learned Managing a WebSocket Platform at Scale" /><published>2025-06-09T09:00:00-03:00</published><updated>2025-06-09T09:00:00-03:00</updated><id>http://localhost:4000/2025/06/09/websocket-at-scale</id><content type="html" xml:base="http://localhost:4000/2025/06/09/websocket-at-scale/"><![CDATA[<h2 id="introduction">Introduction</h2>
-
-<p>Over the past two years, I’ve managed a real-time platform with WebSocket applications handling more than 8 million open connections and processing over 50,000 RPS.</p>
-
-<p>In this blog post, I want to share 4 key lessons learned while managing this platform. While our infrastructure ran on Kubernetes, these insights apply to any WebSocket deployment on AWS.</p>
-
-<hr />
-
-<h2 id="1-dont-trust-the-aws-ec2-up-to-network-bandwidth">1. Don’t Trust the AWS EC2 “Up to” Network Bandwidth</h2>
-
-<p>When selecting an instance type, you might choose a <code class="language-plaintext highlighter-rouge">c5.2xlarge</code> because it meets your CPU/Memory requirements and advertises “Up to 10 Gbps” network bandwidth. However, AWS documentation clearly states:</p>
-
-<blockquote>
-  <p>Instances marked with “Up to” Network Bandwidth have a baseline bandwidth and can use a network I/O credit mechanism to burst beyond their baseline bandwidth on a best effort basis.</p>
-</blockquote>
-
-<p>This means you shouldn’t expect to sustain 10 Gbps for extended periods.</p>
-
-<h3 id="finding-the-real-baseline">Finding the Real Baseline</h3>
-
-<p>You can check the actual baseline bandwidth using this AWS CLI command:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aws ec2 describe-instance-types <span class="se">\</span>
-    <span class="nt">--filters</span> <span class="s2">"Name=instance-type,Values=c5.*"</span> <span class="se">\</span>
-    <span class="nt">--query</span> <span class="s2">"InstanceTypes[].[InstanceType, NetworkInfo.NetworkPerformance, NetworkInfo.NetworkCards[0].BaselineBandwidthInGbps] | sort_by(@,&amp;[2])"</span> <span class="se">\</span>
-    <span class="nt">--output</span> table
-</code></pre></div></div>
-
-<p>This returns:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>---------------------------------------------
-|           DescribeInstanceTypes           |
-+--------------+--------------------+-------+
-|  c5.large    |  Up to 10 Gigabit  |  0.75 |
-|  c5.xlarge   |  Up to 10 Gigabit  |  1.25 |
-|  c5.2xlarge  |  Up to 10 Gigabit  |  2.5  |
-|  c5.4xlarge  |  Up to 10 Gigabit  |  5.0  |
-|  c5.9xlarge  |  12 Gigabit        |  12.0 |
-|  c5.12xlarge |  12 Gigabit        |  12.0 |
-|  c5.18xlarge |  25 Gigabit        |  25.0 |
-|  c5.24xlarge |  25 Gigabit        |  25.0 |
-|  c5.metal    |  25 Gigabit        |  25.0 |
-+--------------+--------------------+-------+
-</code></pre></div></div>
-
-<p>Notice that a <code class="language-plaintext highlighter-rouge">c5.2xlarge</code> has a real baseline of only 2.5 Gbps instead of the advertised 10 Gbps. Choose instance types based on your actual network requirements.</p>
-
-<p>💡 <strong>Tip</strong>: Consider the <code class="language-plaintext highlighter-rouge">n</code> instance variants (like <code class="language-plaintext highlighter-rouge">c5n</code>) which offer better network bandwidth baselines.</p>
-
-<hr />
-
-<h2 id="2-monitor-ec2-network-throttling">2. Monitor EC2 Network Throttling</h2>
-
-<p>Even with the right instance type, you might see packets being queued or dropped. Use <code class="language-plaintext highlighter-rouge">ethtool</code> to investigate network throttling:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>ethtool <span class="nt">-S</span> eth0 | <span class="nb">grep </span>exceeded
-    bw_in_allowance_exceeded: 5976
-    bw_out_allowance_exceeded: 70727915
-    pps_allowance_exceeded: 3316
-    conntrack_allowance_exceeded: 0
-    linklocal_allowance_exceeded: 0
-</code></pre></div></div>
-
-<h3 id="understanding-the-metrics">Understanding the Metrics</h3>
-
-<ul>
-  <li><strong><code class="language-plaintext highlighter-rouge">bw_in_allowance_exceeded</code></strong>:  High values indicate incoming throttling</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">bw_out_allowance_exceeded</code></strong>: High values indicate egress throttling</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">pps_allowance_exceeded</code></strong>: Too many small packets hitting rate limits</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">conntrack_allowance_exceeded</code></strong>: Connection tracking table full (should be 0)</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">linklocal_allowance_exceeded</code></strong>: Link-local traffic limit exceeded (should be 0)</li>
-</ul>
-
-<p>💡 <strong>Tip</strong>: Monitor these values with CloudWatch and set up alerts. Packet retransmission significantly slows down WebSocket applications.</p>
-
-<hr />
-
-<h2 id="3-tune-conntrack-for-long-lived-connections">3. Tune Conntrack for Long-Lived Connections</h2>
-
-<p>WebSocket applications maintain long-lived connections that can exhaust the Linux connection tracking table, causing new connections to be dropped.</p>
-
-<h3 id="check-current-usage">Check Current Usage</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Current tracked connections</span>
-<span class="nb">cat</span> /proc/sys/net/netfilter/nf_conntrack_count
-
-<span class="c"># Maximum allowed connections  </span>
-<span class="nb">cat</span> /proc/sys/net/netfilter/nf_conntrack_max
-
-<span class="c"># Usage percentage</span>
-<span class="nb">echo</span> <span class="s2">"scale=2; </span><span class="si">$(</span><span class="nb">cat</span> /proc/sys/net/netfilter/nf_conntrack_count<span class="si">)</span><span class="s2"> * 100 / </span><span class="si">$(</span><span class="nb">cat</span> /proc/sys/net/netfilter/nf_conntrack_max<span class="si">)</span><span class="s2">"</span> | bc
-</code></pre></div></div>
-
-<h3 id="increase-the-limits-for-high-load-environments">Increase the Limits for High-Load Environments</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># For high-load WebSocket environments, increase significantly</span>
-<span class="c"># Rule of thumb: 4× expected concurrent connections, considering CPU cores</span>
-<span class="nb">sudo </span>sysctl <span class="nt">-w</span> net.netfilter.nf_conntrack_max<span class="o">=</span>524288
-
-<span class="c"># Make persistent</span>
-<span class="nb">echo</span> <span class="s2">"net.netfilter.nf_conntrack_max = 524288"</span> | <span class="nb">sudo tee</span> <span class="nt">-a</span> /etc/sysctl.conf
-</code></pre></div></div>
-
-<h3 id="optimize-for-websocket-applications">Optimize for WebSocket Applications</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Reduce timeout for established connections (2 hours instead of 5 days)</span>
-<span class="nb">echo</span> <span class="s2">"net.netfilter.nf_conntrack_tcp_timeout_established = 7200"</span> | <span class="nb">sudo tee</span> <span class="nt">-a</span> /etc/sysctl.conf
-
-<span class="c"># Optimize connection cleanup</span>
-<span class="nb">echo</span> <span class="s2">"net.netfilter.nf_conntrack_tcp_timeout_time_wait = 30"</span> | <span class="nb">sudo tee</span> <span class="nt">-a</span> /etc/sysctl.conf
-
-<span class="c"># Increase hash table size for better performance with many connections</span>
-<span class="nb">echo</span> <span class="s2">"net.netfilter.nf_conntrack_buckets = 65536"</span> | <span class="nb">sudo tee</span> <span class="nt">-a</span> /etc/sysctl.conf
-</code></pre></div></div>
-
-<p>💡 <strong>Tip</strong>: Set <code class="language-plaintext highlighter-rouge">nf_conntrack_max</code> based on your instance’s CPU cores and memory. For high-load environments, use: <code class="language-plaintext highlighter-rouge">(CPU cores × 16384)</code> as a starting point, then adjust based on actual usage and available memory.</p>
-
-<hr />
-
-<h2 id="4-avoid-route53-dns-resolution-limits">4. Avoid Route53 DNS Resolution Limits</h2>
-
-<p>Each network interface can only send <a href="https://docs.aws.amazon.com/whitepapers/latest/hybrid-cloud-dns-options-for-vpc/constraints.html#:~:text=Each%20network%20interface%20in%20an,provided%20DNS%20server%20every%20second.">1024 packets per second</a> to the Amazon-provided DNS server. This becomes a bottleneck for applications making frequent external API calls.</p>
-
-<h3 id="kubernetes-solution">Kubernetes Solution</h3>
-
-<p>Deploy <a href="https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/">nodelocaldns</a> to cache DNS queries locally and reduce latency. In high-load environments, it’s recommended to enable <code class="language-plaintext highlighter-rouge">force_tcp</code> to avoid issues caused by dropped or timed-out UDP packets, ensuring more reliable DNS resolution.</p>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">v1</span>
-<span class="na">kind</span><span class="pi">:</span> <span class="s">ConfigMap</span>
-<span class="na">metadata</span><span class="pi">:</span>
-  <span class="na">name</span><span class="pi">:</span> <span class="s">nodelocaldns</span>
-  <span class="na">namespace</span><span class="pi">:</span> <span class="s">kube-system</span>
-<span class="na">data</span><span class="pi">:</span>
-  <span class="na">Corefile</span><span class="pi">:</span> <span class="pi">|</span>
-    <span class="s">cluster.local:53 {</span>
-        <span class="s">errors</span>
-        <span class="s">cache {</span>
-            <span class="s">success 9984 30</span>
-            <span class="s">denial 9984 5</span>
-        <span class="s">}</span>
-        <span class="s">reload</span>
-        <span class="s">loop</span>
-        <span class="s">bind 169.254.20.10</span>
-        <span class="s">forward . __PILLAR__CLUSTER__DNS__ {</span>
-            <span class="s">force_tcp</span>
-        <span class="s">}</span>
-        <span class="s">prometheus :9253</span>
-        <span class="s">health 169.254.20.10:8080</span>
-    <span class="s">}</span>
-</code></pre></div></div>
-
-<h3 id="ec2-instance-solution">EC2 Instance Solution</h3>
-
-<p>Set up a local DNS cache using bind9:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Install bind9</span>
-<span class="nb">sudo </span>yum <span class="nb">install</span> <span class="nt">-y</span> <span class="nb">bind </span>bind-utils
-
-<span class="c"># Configure as caching nameserver</span>
-<span class="nb">sudo tee</span> /etc/named.conf <span class="o">&lt;&lt;</span> <span class="no">EOF</span><span class="sh">
-options {
-    listen-on port 53 { 127.0.0.1; };
-    directory "/var/named";
-    recursion yes;
-    allow-query { localhost; };
-    forwarders { 169.254.169.253; };
-    forward only;
-};
-</span><span class="no">EOF
-
-</span><span class="c"># Update /etc/resolv.conf</span>
-<span class="nb">echo</span> <span class="s2">"nameserver 127.0.0.1"</span> | <span class="nb">sudo tee</span> /etc/resolv.conf
-
-<span class="c"># Start and enable bind</span>
-<span class="nb">sudo </span>systemctl start named
-<span class="nb">sudo </span>systemctl <span class="nb">enable </span>named
-</code></pre></div></div>
-
-<p>💡 <strong>Tip</strong>: Monitor DNS query patterns and cache hit rates to optimize your caching strategy.</p>
-
-<hr />
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>Managing WebSocket applications at scale requires understanding these AWS networking limitations:</p>
-
-<ol>
-  <li><strong>Know your real network capacity</strong> - Don’t rely on “up to” bandwidth specifications</li>
-  <li><strong>Monitor network throttling</strong> - Use <code class="language-plaintext highlighter-rouge">ethtool</code> and set up CloudWatch alerts</li>
-  <li><strong>Tune conntrack for long-lived connections</strong> - Scale limits based on connection patterns</li>
-  <li><strong>Implement DNS caching</strong> - Avoid Route53 rate limits with local DNS caching</li>
-</ol>
-
-<p>These optimizations helped us maintain stable performance with 8M+ concurrent connections during traffic spikes. Always test these changes in staging environments that mirror your production load.</p>
-
-<hr />
-
-<p>In my next post I’ll talk about the challenges of scaling up and down this environment.</p>
-
-<p><em>Have you encountered similar challenges scaling WebSocket applications? Share your experiences in the comments below.</em></p>
-
-<p><em>This blog was written by :brain: + :robot_face:</em></p>]]></content><author><name>Rafa Oliveira</name></author><category term="Network" /><category term="aws" /><category term="network" /><category term="DNS" /><category term="EC2" /><category term="websocket" /><category term="scalability" /><summary type="html"><![CDATA[Introduction]]></summary></entry><entry><title type="html">Welcome to My Tech Blog</title><link href="http://localhost:4000/2025/06/09/welcome-to-my-blog/" rel="alternate" type="text/html" title="Welcome to My Tech Blog" /><published>2025-06-09T09:00:00-03:00</published><updated>2025-06-09T09:00:00-03:00</updated><id>http://localhost:4000/2025/06/09/welcome-to-my-blog</id><content type="html" xml:base="http://localhost:4000/2025/06/09/welcome-to-my-blog/"><![CDATA[<p>Hey there! Welcome to my tech blog. I’m Rafael, a Engineer passionate about cloud architecture and automation. Here, I’ll be sharing insights about AWS,DevOps practices, and emerging technologies.</p>
-
-<h2 id="what-to-expect">What to Expect</h2>
-
-<p>Expect posts covering:</p>
-<ul>
-  <li>GenAI</li>
-  <li>Cloud Architecture &amp; AWS</li>
-  <li>DevOps Best Practices</li>
-  <li>Infrastructure as Code</li>
-  <li>Kubernetes &amp; Containerization</li>
-  <li>Performance Optimization</li>
-  <li>Security in the Cloud</li>
-</ul>
-
-<p>Follow me on <a href="https://linkedin.com/in/rafavinicius">LinkedIn</a> for more tech insights and updates. Looking forward to sharing knowledge and experiences with you!</p>]]></content><author><name>Rafa Oliveira</name></author><category term="general" /><category term="blog" /><summary type="html"><![CDATA[Hey there! Welcome to my tech blog. I’m Rafael, a Engineer passionate about cloud architecture and automation. Here, I’ll be sharing insights about AWS,DevOps practices, and emerging technologies.]]></summary></entry></feed>
+</table>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      document.querySelectorAll("pre > code.language-mermaid").forEach(function (code) {
+        var pre = code.parentElement;
+        var div = document.createElement("div");
+        div.className = "mermaid";
+        div.textContent = code.textContent;
+        pre.parentElement.replaceChild(div, pre);
+      });
+      mermaid.initialize({ startOnLoad: true, theme: "default" });
+    });
+  </script>
+
+  <footer class="post-footer">
+    <div class="social-sharing">
+  <h3>Share this post</h3>
+  <div class="share-buttons">
+    <!-- Twitter -->
+    <a href="https://twitter.com/intent/tweet?text=Scaling+Private+Key+Operations+Across+a+Fleet+of+AWS+Nitro+Enclaves&url=http://localhost:4000/2026/03/09/nitro-enclave-kms/"
+       onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;"
+       class="share-button twitter">
+       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+       </svg>
+       <span>Tweet</span>
+    </a>
+
+    <!-- LinkedIn -->
+    <a href="https://www.linkedin.com/shareArticle?mini=true&url=http://localhost:4000/2026/03/09/nitro-enclave-kms/&title=Scaling+Private+Key+Operations+Across+a+Fleet+of+AWS+Nitro+Enclaves&summary=Recently+I+was+working+on+a+project+where+we+needed+to+use+AWS+Nitro+Enclaves+as+a+Trusted+Execution+Environment+%28TEE%29+to+handle+highly+s...&source=Rafa Oliveira's Tech Blog"
+       onclick="window.open(this.href, 'linkedin-share', 'width=550,height=435');return false;"
+       class="share-button linkedin">
+       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+         <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+       </svg>
+       <span>Share</span>
+    </a>
+
+    <!-- Facebook -->
+    <a href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:4000/2026/03/09/nitro-enclave-kms/"
+       onclick="window.open(this.href, 'facebook-share', 'width=550,height=435');return false;"
+       class="share-button facebook">
+       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+         <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
+       </svg>
+       <span>Share</span>
+    </a>
+  </div>
+</div>
+
+<style>
+.social-sharing {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.social-sharing h3 {
+  font-size: 1.2rem;
+  color: #343a40;
+  margin-bottom: 1rem;
+}
+
+.share-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.share-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  text-decoration: none;
+  color: white;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.share-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.twitter {
+  background-color: #1DA1F2;
+}
+
+.twitter:hover {
+  background-color: #0d8ed9;
+}
+
+.linkedin {
+  background-color: #0077B5;
+}
+
+.linkedin:hover {
+  background-color: #005e8f;
+}
+
+.facebook {
+  background-color: #4267B2;
+}
+
+.facebook:hover {
+  background-color: #34518d;
+}
+
+@media (max-width: 768px) {
+  .share-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .share-button {
+    justify-content: center;
+  }
+}
+</style> 
+    
+    <div class="post-navigation">
+      
+        <a class="prev-post" href="/2025/12/26/speed-up-ecs-start/">&larr; Speeding up ECS taks startup with Seekable OCI (SOCI)</a>
+      
+      
+    </div>
+  </footer>
+</article>
+<style>
+.post {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.post-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.post-title {
+  font-size: 2.5rem;
+  color: #1a1a1a;
+  margin-bottom: 1rem;
+}
+
+.post-meta {
+  color: #6c757d;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.post-tags {
+  margin: 1rem 0;
+}
+
+.post-tag {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  margin: 0.2rem;
+  background: #f8f9fa;
+  border-radius: 20px;
+  color: #495057;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.post-tag:hover {
+  background: #e9ecef;
+  color: #1a1a1a;
+}
+
+.post-content {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #343a40;
+}
+
+.post-content p {
+  margin-bottom: 1.5rem;
+}
+
+.post-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 2rem 0;
+}
+
+.post-navigation {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+}
+
+.prev-post,
+.next-post {
+  color: #007bff;
+  text-decoration: none;
+  max-width: 45%;
+}
+
+.prev-post:hover,
+.next-post:hover {
+  color: #0056b3;
+}
+
+@media (max-width: 768px) {
+  .post {
+    padding: 1rem;
+  }
+
+  .post-title {
+    font-size: 2rem;
+  }
+
+  .post-navigation {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .prev-post,
+  .next-post {
+    max-width: 100%;
+  }
+}
+</style> 
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Rafa Oliveira&#39;s Tech Blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Rafael Oliveira</li><li><a class="u-email" href="mailto:rafavinicius67@gmail.com">rafavinicius67@gmail.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Insights on AWS, DevOps, and AI</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
