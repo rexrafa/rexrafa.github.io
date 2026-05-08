@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Back to the Basics: DNS Resolution | Rafa Cardoso’s Tech Blog</title>
+<meta name="generator" content="Jekyll v3.9.5" />
+<meta property="og:title" content="Back to the Basics: DNS Resolution" />
+<meta name="author" content="Rafa Cardoso" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Every engineer eventually gets bitten by DNS. A service starts timing out, and three hours later you realize your pod has been hammering the per-ENI 1024-PPS link-local budget. Or you spend an afternoon debugging a stale record only to discover the browser was happily ignoring your perfectly configured resolv.conf. DNS is invisible when it works and devastating when it doesn’t." />
+<meta property="og:description" content="Every engineer eventually gets bitten by DNS. A service starts timing out, and three hours later you realize your pod has been hammering the per-ENI 1024-PPS link-local budget. Or you spend an afternoon debugging a stale record only to discover the browser was happily ignoring your perfectly configured resolv.conf. DNS is invisible when it works and devastating when it doesn’t." />
+<link rel="canonical" href="http://localhost:4000/2026/05/08/dns-resolution/" />
+<meta property="og:url" content="http://localhost:4000/2026/05/08/dns-resolution/" />
+<meta property="og:site_name" content="Rafa Cardoso’s Tech Blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2026-05-08T00:00:00+02:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Back to the Basics: DNS Resolution" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Rafa Cardoso"},"dateModified":"2026-05-08T00:00:00+02:00","datePublished":"2026-05-08T00:00:00+02:00","description":"Every engineer eventually gets bitten by DNS. A service starts timing out, and three hours later you realize your pod has been hammering the per-ENI 1024-PPS link-local budget. Or you spend an afternoon debugging a stale record only to discover the browser was happily ignoring your perfectly configured resolv.conf. DNS is invisible when it works and devastating when it doesn’t.","headline":"Back to the Basics: DNS Resolution","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2026/05/08/dns-resolution/"},"url":"http://localhost:4000/2026/05/08/dns-resolution/"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Rafa Cardoso's Tech Blog" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Rafa Cardoso&#39;s Tech Blog</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about.html">About Me</a><a class="page-link" href="/archive/">Archive</a><a class="page-link" href="/tags/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post">
+  <header class="post-header">
+    <h1 class="post-title">Back to the Basics: DNS Resolution</h1>
+    <div class="post-meta">
+      <time datetime="2026-05-08T00:00:00+02:00">
+        May 8, 2026
+      </time>
+      
+        • <span class="post-author">Rafa Cardoso</span>
+      
+    </div>
+    
+      <div class="post-tags">
+        
+          <a href="/tags#aws" class="post-tag">aws</a>
+        
+          <a href="/tags#network" class="post-tag">network</a>
+        
+          <a href="/tags#dns" class="post-tag">DNS</a>
+        
+          <a href="/tags#linux" class="post-tag">Linux</a>
+        
+          <a href="/tags#kubernetes" class="post-tag">Kubernetes</a>
+        
+          <a href="/tags#eks" class="post-tag">EKS</a>
+        
+          <a href="/tags#docker" class="post-tag">Docker</a>
+        
+          <a href="/tags#route53" class="post-tag">Route53</a>
+        
+          <a href="/tags#coredns" class="post-tag">CoreDNS</a>
+        
+      </div>
+    
+  </header>
+
+  <div class="post-content">
+    <p>Every engineer eventually gets bitten by DNS. A service starts timing out, and three hours later you realize your pod has been hammering the per-ENI 1024-PPS link-local budget. Or you spend an afternoon debugging a stale record only to discover the browser was happily ignoring your perfectly configured <code class="language-plaintext highlighter-rouge">resolv.conf</code>. DNS is invisible when it works and devastating when it doesn’t.</p>
+
+<p>So this is a ground-up walk through how DNS actually behaves across the Linux stack — the OS resolver, Docker containers, Kubernetes pods on EKS, and the AWS-level constraints that quietly shape all of it. References to primary sources throughout.</p>
+
+<hr />
+
+<h2 id="what-is-dns">What Is DNS?</h2>
+
+<p>DNS is the distributed directory that maps human-readable names to IP addresses. When your app calls <code class="language-plaintext highlighter-rouge">connect("api.example.com", 443)</code>, the OS has to resolve that name before a single TCP packet leaves the box. Resolution is delegated to a hierarchy: root nameservers → TLD nameservers → authoritative nameservers.</p>
+
+<p>Here’s the full recursive path for a cold cache:</p>
+
+<pre><code class="language-mermaid">sequenceDiagram
+    participant App as Application
+    participant OS as OS Resolver&lt;br/&gt;(resolv.conf)
+    participant Rec as Recursive Resolver&lt;br/&gt;(VPC DNS)
+    participant Root as Root NS
+    participant TLD as TLD NS (.com)
+    participant Auth as Authoritative NS&lt;br/&gt;(example.com)
+
+    Note over App,Auth: Cold cache: full recursive resolution
+
+    App-&gt;&gt;OS: getaddrinfo("api.example.com")
+    OS-&gt;&gt;Rec: Query UDP:53 api.example.com A?
+
+    Rec-&gt;&gt;Root: Who handles .com?
+    Root--&gt;&gt;Rec: Referral: .com NS records
+
+    Rec-&gt;&gt;TLD: Who handles example.com?
+    TLD--&gt;&gt;Rec: Referral: example.com NS records
+
+    Rec-&gt;&gt;Auth: api.example.com A?
+    Auth--&gt;&gt;Rec: A 93.184.216.34 TTL 300
+
+    Rec--&gt;&gt;OS: Answer 93.184.216.34 (cached for TTL)
+    OS--&gt;&gt;App: IP 93.184.216.34
+
+    Note over Rec: Recursive resolver caches the answer for TTL seconds.&lt;br/&gt;Subsequent queries are served from cache (no upstream hops).
+</code></pre>
+
+<blockquote>
+  <p><strong>Reference:</strong> <a href="https://www.rfc-editor.org/rfc/rfc1034">RFC 1034 – Domain Names: Concepts and Facilities</a>, <a href="https://www.rfc-editor.org/rfc/rfc1035">RFC 1035 – Domain Names: Implementation and Specification</a></p>
+</blockquote>
+
+<hr />
+
+<h2 id="linux-etcresolvconf-and-the-os-resolver">Linux: <code class="language-plaintext highlighter-rouge">/etc/resolv.conf</code> and the OS Resolver</h2>
+
+<p>On Linux, name resolution comes down to two files. <code class="language-plaintext highlighter-rouge">nsswitch.conf</code> defines the resolution order (files, DNS, mDNS…), and <code class="language-plaintext highlighter-rouge">/etc/resolv.conf</code> configures the DNS resolver itself. The DNS part is what matters here.</p>
+
+<p>A typical <code class="language-plaintext highlighter-rouge">resolv.conf</code> on an EC2 instance inside a VPC:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>nameserver 10.0.0.2      # VPC base CIDR + 2; the same resolver is also reachable at 169.254.169.253
+search ec2.internal
+options timeout:2 attempts:3
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">nameserver</code> is the resolver to query. Worth knowing: the glibc resolver hard-codes <code class="language-plaintext highlighter-rouge">MAXNS = 3</code> in <code class="language-plaintext highlighter-rouge">resolv.h</code>, so anything beyond the third entry is silently ignored. This is also why an AWS DHCP option set with four DNS servers will only ever exercise the first three on a Linux box. <a href="https://www.man7.org/linux/man-pages/man5/resolv.conf.5.html">[1]</a> <a href="https://docs.aws.amazon.com/whitepapers/latest/hybrid-cloud-dns-options-for-vpc/constraints.html">[2]</a></p>
+
+<p><code class="language-plaintext highlighter-rouge">search</code> is the list of domain suffixes appended when resolving a short hostname — <code class="language-plaintext highlighter-rouge">curl myservice</code> becomes a query for <code class="language-plaintext highlighter-rouge">myservice.ec2.internal</code> before the bare name is tried. The list itself is also bounded (<code class="language-plaintext highlighter-rouge">MAXDNSRCH = 6</code> entries / 256 chars in glibc). Then there’s <code class="language-plaintext highlighter-rouge">ndots</code>, a threshold (default 1) for how many dots a name needs before it’s tried as absolute first. That one becomes critical in Kubernetes — more on it below. Finally <code class="language-plaintext highlighter-rouge">timeout</code>/<code class="language-plaintext highlighter-rouge">attempts</code> control per-server query timeout (default 5s) and total attempts across all listed nameservers (default 2). The <code class="language-plaintext highlighter-rouge">timeout:2 attempts:3</code> you see above is the standard AWS tuning to fail fast under packet loss.</p>
+
+<h3 id="udp-vs-tcp">UDP vs. TCP</h3>
+
+<p>DNS speaks <strong>UDP port 53</strong> by default. Classic DNS caps UDP payloads at 512 bytes (RFC 1035 §2.3.4), so anything larger gets truncated and the client is expected to retry over <strong>TCP port 53</strong>. Modern resolvers use EDNS0 (RFC 6891) to negotiate UDP payloads up to 4096 bytes, but TCP is still the fallback.</p>
+
+<p>A few things still <em>require</em> TCP no matter what: zone transfers (AXFR/IXFR) are always TCP; responses bigger than the negotiated EDNS0 buffer get the TC (truncated) bit set and force a TCP retry; and DNSSEC responses are often large enough to push you over the edge.</p>
+
+<p>You can poke at this on Linux with <code class="language-plaintext highlighter-rouge">dig +tcp api.example.com</code> to force TCP, or <code class="language-plaintext highlighter-rouge">tcpdump -i any port 53</code> to see the actual mix on the wire.</p>
+
+<blockquote>
+  <p><strong>Reference:</strong> <a href="https://www.rfc-editor.org/rfc/rfc1035#section-4.2.2">RFC 1035 §4.2.2 – Messages Carried by TCP</a>, <a href="https://www.rfc-editor.org/rfc/rfc6891">RFC 6891 – EDNS0</a>, <a href="https://www.rfc-editor.org/rfc/rfc7766">RFC 7766 – DNS Transport over TCP</a>, <a href="https://www.man7.org/linux/man-pages/man5/resolv.conf.5.html">resolv.conf(5)</a></p>
+</blockquote>
+
+<hr />
+
+<h2 id="browser-dns-the-cache-you-forget-exists">Browser DNS: The Cache You Forget Exists</h2>
+
+<p>Browsers maintain their own DNS cache, <strong>completely independent</strong> of the OS resolver. Chrome and Chromium-based browsers (Edge included) keep an in-process cache with a default TTL cap. You can poke at it via <code class="language-plaintext highlighter-rouge">chrome://net-internals/#dns</code>.</p>
+
+<p>That independence is what catches people out. Once an entry is in the browser’s cache, the OS resolver isn’t consulted again until that entry expires — restarting <code class="language-plaintext highlighter-rouge">systemd-resolved</code> or running <code class="language-plaintext highlighter-rouge">resolvectl flush-caches</code> does nothing for in-flight browser sessions.</p>
+
+<p>The TTL situation is also weirder than you’d expect. When Chromium uses the system <code class="language-plaintext highlighter-rouge">getaddrinfo</code> path it has no way to learn the upstream TTL (POSIX <code class="language-plaintext highlighter-rouge">getaddrinfo</code> doesn’t expose it), so positive entries get pinned at a flat <strong>60 seconds</strong> and negative entries at <strong>5 seconds</strong>. When Chromium’s own async resolver / DoH path is in use it honours the wire TTL but still enforces a <strong>60 second minimum</strong>. The upshot: even if the authoritative NS returns <code class="language-plaintext highlighter-rouge">TTL=86400</code>, the browser’s effective TTL is much shorter — and a <code class="language-plaintext highlighter-rouge">TTL=1</code> response is still held for at least a minute. <a href="https://textslashplain.com/2022/03/31/chromiums-dns-cache/">[1]</a> <a href="https://chromium.googlesource.com/chromium/src/+/main/net/dns/README.md">[2]</a></p>
+
+<p>One more thing worth knowing: browsers always send FQDNs to the OS resolver. Search domains are completely ignored — short-name resolution via <code class="language-plaintext highlighter-rouge">search</code> is a shell concern, not a browser concern.</p>
+
+<p>Firefox does the same, with its own cache configurable under <code class="language-plaintext highlighter-rouge">about:config</code> → <code class="language-plaintext highlighter-rouge">network.dnsCacheExpiration</code> (default 60 seconds, capped by <code class="language-plaintext highlighter-rouge">network.dnsCacheExpirationGracePeriod</code>).</p>
+
+<blockquote>
+  <p><strong>Reference:</strong> <a href="https://chromium.googlesource.com/chromium/src/+/main/net/dns/README.md">Chromium net/dns README</a>, <a href="https://source.chromium.org/chromium/chromium/src/+/main:net/dns/host_resolver_manager.cc">Chromium HostResolverManager source</a>, <a href="https://textslashplain.com/2022/03/31/chromiums-dns-cache/">Chromium’s DNS Cache (textslashplain)</a>, <a href="https://developer.mozilla.org/en-US/docs/Web/Performance/dns-prefetch">MDN: DNS prefetching</a></p>
+</blockquote>
+
+<hr />
+
+<h2 id="docker-which-dns-does-my-container-use">Docker: Which DNS Does My Container Use?</h2>
+
+<p>Docker adds its own DNS layer on top, and the behavior depends entirely on which network driver the container uses.</p>
+
+<h3 id="user-defined-bridge-networks">User-defined bridge networks</h3>
+
+<p>On a <strong>user-defined</strong> bridge (anything created with <code class="language-plaintext highlighter-rouge">docker network create</code>), Docker rewrites the container’s <code class="language-plaintext highlighter-rouge">/etc/resolv.conf</code> to point at <strong><code class="language-plaintext highlighter-rouge">127.0.0.11</code></strong> — Docker’s embedded DNS server, listening on a per-namespace loopback. That embedded resolver does two things: it answers service discovery queries within the network (Docker injects A/AAAA records for container names and aliases, so a container named <code class="language-plaintext highlighter-rouge">db</code> is resolvable from its peers as <code class="language-plaintext highlighter-rouge">db</code>), and it forwards everything else to the DNS servers from the <strong>host’s</strong> <code class="language-plaintext highlighter-rouge">/etc/resolv.conf</code> snapshot taken at container start.</p>
+
+<p>That last bit is the gotcha. Docker copies the host DNS config at container <strong>start time</strong>. If the host’s <code class="language-plaintext highlighter-rouge">resolv.conf</code> changes later — say, a VPN connects or disconnects — existing containers won’t notice until they’re restarted.</p>
+
+<blockquote>
+  <p>Note: the <strong>default</strong> <code class="language-plaintext highlighter-rouge">bridge</code> network (the one named <code class="language-plaintext highlighter-rouge">bridge</code> that’s created automatically) has no embedded DNS. Only user-defined bridges do. On the default bridge, container-to-container name resolution needs the legacy <code class="language-plaintext highlighter-rouge">--link</code> flag, which writes <code class="language-plaintext highlighter-rouge">/etc/hosts</code> entries instead of using DNS. Docker’s own docs recommend user-defined networks for anything non-trivial.</p>
+</blockquote>
+
+<h3 id="host-network---network-host">Host network (<code class="language-plaintext highlighter-rouge">--network host</code>)</h3>
+
+<p>No network namespace, no embedded DNS. The container shares the host’s network stack and reads <code class="language-plaintext highlighter-rouge">/etc/resolv.conf</code> directly from the host. The <code class="language-plaintext highlighter-rouge">127.0.0.11</code> resolver is nowhere in the picture.</p>
+
+<h3 id="custom-dns-flags">Custom DNS flags</h3>
+
+<p>You can override DNS per-container or globally:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Per container</span>
+docker run <span class="nt">--dns</span> 8.8.8.8 <span class="nt">--dns-search</span> example.com myimage
+
+<span class="c"># Global daemon default (daemon.json)</span>
+<span class="o">{</span>
+  <span class="s2">"dns"</span>: <span class="o">[</span><span class="s2">"10.0.0.2"</span><span class="o">]</span>,
+  <span class="s2">"dns-search"</span>: <span class="o">[</span><span class="s2">"corp.internal"</span><span class="o">]</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>When <code class="language-plaintext highlighter-rouge">--dns</code> is set, Docker writes it into the container’s <code class="language-plaintext highlighter-rouge">/etc/resolv.conf</code> and the embedded DNS server forwards to it.</p>
+
+<pre><code class="language-mermaid">flowchart TD
+    A[Container process] --&gt;|"getaddrinfo()"| B["/etc/resolv.conf\n127.0.0.11"]
+    B --&gt; C{Docker embedded DNS}
+    C --&gt;|"known container\nor alias"| D[Return container IP\nfrom Docker network]
+    C --&gt;|"unknown name"| E[Forward to host\nresolv.conf DNS]
+    E --&gt; F[VPC DNS / 8.8.8.8]
+    F --&gt;|answer| E
+    E --&gt;|answer| C
+    C --&gt;|answer| A
+
+    style C fill:#3b82f6,color:#fff
+    style D fill:#10b981,color:#fff
+    style F fill:#f59e0b,color:#fff
+</code></pre>
+
+<blockquote>
+  <p><strong>Reference:</strong> <a href="https://docs.docker.com/network/drivers/bridge/#dns-services">Docker docs – Container DNS</a>, <a href="https://docs.docker.com/network/network-tutorial-standalone/">Docker embedded DNS server</a></p>
+</blockquote>
+
+<hr />
+
+<h2 id="kubernetes--eks-dns-all-the-way-down">Kubernetes / EKS: DNS All the Way Down</h2>
+
+<p>Kubernetes DNS is where it gets genuinely complex. Three layers stack on top of each other: Pod configuration, CoreDNS, and (optionally) NodeLocal DNSCache.</p>
+
+<h3 id="layer-1-pod-etcresolvconf-and-dnspolicy">Layer 1: Pod <code class="language-plaintext highlighter-rouge">/etc/resolv.conf</code> and <code class="language-plaintext highlighter-rouge">dnsPolicy</code></h3>
+
+<p>When kubelet starts a Pod, it writes a <code class="language-plaintext highlighter-rouge">/etc/resolv.conf</code> inside the container based on the Pod’s <code class="language-plaintext highlighter-rouge">dnsPolicy</code> and <code class="language-plaintext highlighter-rouge">dnsConfig</code>. The default policy is <code class="language-plaintext highlighter-rouge">ClusterFirst</code>, which produces:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>nameserver 10.100.0.10      # CoreDNS ClusterIP
+search &lt;namespace&gt;.svc.cluster.local svc.cluster.local cluster.local
+options ndots:5
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">ndots:5</code> is the biggest operational footgun in Kubernetes DNS. With it set, any name with <strong>fewer than 5 dots</strong> is first tried with each search domain appended, and only as an absolute name on the <em>last</em> attempt. For <code class="language-plaintext highlighter-rouge">api.example.com</code> (2 dots), that’s <strong>4 sequential DNS lookups</strong> — three NXDOMAINs followed by the correct answer:</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">api.example.com.&lt;namespace&gt;.svc.cluster.local.</code> → NXDOMAIN</li>
+  <li><code class="language-plaintext highlighter-rouge">api.example.com.svc.cluster.local.</code> → NXDOMAIN</li>
+  <li><code class="language-plaintext highlighter-rouge">api.example.com.cluster.local.</code> → NXDOMAIN</li>
+  <li><code class="language-plaintext highlighter-rouge">api.example.com.</code> → answer</li>
+</ol>
+
+<p>And because glibc’s <code class="language-plaintext highlighter-rouge">getaddrinfo</code> fires A and AAAA queries in parallel by default (since glibc 2.9), the resolver actually emits <strong>8 UDP packets</strong> per call. Keep that number in mind when we get to the per-ENI packet budget below. The reason <code class="language-plaintext highlighter-rouge">ndots:5</code> is the Kubernetes default at all is to keep SRV-style relative lookups (<code class="language-plaintext highlighter-rouge">_proto._tcp.svc</code>) resolvable inside the cluster zone. <a href="https://pracucci.com/kubernetes-dns-resolution-ndots-options-and-why-it-may-affect-application-performances.html">[1]</a></p>
+
+<p>You can cut the amplification two ways. Either use FQDNs with a trailing dot (<code class="language-plaintext highlighter-rouge">api.example.com.</code>) in your application config — the trailing dot makes the name <em>fully qualified</em> and skips the search list entirely — or just lower <code class="language-plaintext highlighter-rouge">ndots</code> per-pod:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">spec</span><span class="pi">:</span>
+  <span class="na">dnsConfig</span><span class="pi">:</span>
+    <span class="na">options</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">ndots</span>
+        <span class="na">value</span><span class="pi">:</span> <span class="s2">"</span><span class="s">2"</span>
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">dnsPolicy</code> field is what drives all of this:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><code class="language-plaintext highlighter-rouge">dnsPolicy</code></th>
+      <th>resolv.conf behavior</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClusterFirst</code> (default)</td>
+      <td>Cluster DNS (CoreDNS) + search domains</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClusterFirstWithHostNet</code></td>
+      <td>Same, but for pods with <code class="language-plaintext highlighter-rouge">hostNetwork: true</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Default</code></td>
+      <td>Inherits the node’s <code class="language-plaintext highlighter-rouge">/etc/resolv.conf</code> verbatim</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">None</code></td>
+      <td>Fully custom via <code class="language-plaintext highlighter-rouge">dnsConfig</code> — you provide everything</td>
+    </tr>
+  </tbody>
+</table>
+
+<blockquote>
+  <p><strong>Reference:</strong> <a href="https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/">Kubernetes docs – DNS for Services and Pods</a>, <a href="https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#PodSpec">Kubernetes dnsConfig reference</a></p>
+</blockquote>
+
+<h3 id="layer-2-coredns">Layer 2: CoreDNS</h3>
+
+<p>CoreDNS is the cluster DNS server. It runs as a Deployment in <code class="language-plaintext highlighter-rouge">kube-system</code> and is exposed via a ClusterIP Service (typically <code class="language-plaintext highlighter-rouge">10.100.0.10</code> on EKS). Every pod with <code class="language-plaintext highlighter-rouge">ClusterFirst</code> dnsPolicy sends its queries here.</p>
+
+<p>It works through a plugin chain configured via the <code class="language-plaintext highlighter-rouge">Corefile</code> ConfigMap. The critical zones for EKS:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Corefile (simplified EKS default)
+.:53 {
+    errors
+    health
+    kubernetes cluster.local in-addr.arpa ip6.arpa {
+        pods insecure
+        fallthrough in-addr.arpa ip6.arpa
+    }
+    prometheus :9153
+    forward . /etc/resolv.conf    # forwards non-cluster queries to node's DNS (VPC DNS)
+    cache 30
+    loop
+    reload
+    loadbalance
+}
+</code></pre></div></div>
+
+<p>Anything for <code class="language-plaintext highlighter-rouge">*.cluster.local</code> is answered straight from the Kubernetes API (Services, Pods) — no upstream hop. Everything else is forwarded to the node’s <code class="language-plaintext highlighter-rouge">/etc/resolv.conf</code>, which on EKS points to the VPC DNS resolver at VPC CIDR +2.</p>
+
+<pre><code class="language-mermaid">sequenceDiagram
+    participant Pod
+    participant CoreDNS
+    participant K8sAPI as Kubernetes API
+    participant VPC_DNS as VPC DNS (169.254.169.253)
+
+    Pod-&gt;&gt;CoreDNS: Query: myservice.default.svc.cluster.local
+    CoreDNS-&gt;&gt;K8sAPI: Lookup Service "myservice" in "default"
+    K8sAPI--&gt;&gt;CoreDNS: ClusterIP 10.100.12.34
+    CoreDNS--&gt;&gt;Pod: A 10.100.12.34 TTL 30
+
+    Pod-&gt;&gt;CoreDNS: Query: s3.amazonaws.com
+    CoreDNS-&gt;&gt;VPC_DNS: Forward query
+    VPC_DNS--&gt;&gt;CoreDNS: A 52.92.x.x TTL 60
+    CoreDNS--&gt;&gt;Pod: A 52.92.x.x TTL 30
+</code></pre>
+
+<blockquote>
+  <p><strong>Reference:</strong> <a href="https://docs.aws.amazon.com/eks/latest/userguide/coredns.html">EKS – DNS and service discovery</a>, <a href="https://coredns.io/plugins/kubernetes/">CoreDNS Kubernetes plugin</a></p>
+</blockquote>
+
+<h3 id="layer-3-nodelocal-dnscache">Layer 3: NodeLocal DNSCache</h3>
+
+<p>At scale, having every pod on a node fire UDP queries at a single CoreDNS ClusterIP creates two problems. First, conntrack table churn — each new UDP “connection” creates a new conntrack entry with a 30-second timeout. Second, latency: the CoreDNS pod answering you might be on a different node entirely.</p>
+
+<p><strong>NodeLocal DNSCache</strong> fixes both. A <code class="language-plaintext highlighter-rouge">node-cache</code> DaemonSet runs on every node, listening on a <strong>link-local IP</strong> (typically <code class="language-plaintext highlighter-rouge">169.254.20.10</code>) on an interface with no conntrack. Pods are reconfigured to query this local IP instead of CoreDNS directly. The flow changes fundamentally:</p>
+
+<pre><code class="language-mermaid">sequenceDiagram
+    participant Pod
+    participant NodeCache as NodeLocal DNSCache&lt;br/&gt;(169.254.20.10)
+    participant CoreDNS as CoreDNS Service&lt;br/&gt;(10.100.0.10)
+    participant VPC_DNS as VPC DNS
+
+    Note over Pod,NodeCache: Pod resolv.conf: nameserver 169.254.20.10
+
+    Pod-&gt;&gt;NodeCache: UDP query: myservice.default.svc.cluster.local
+
+    alt Cache HIT
+        NodeCache--&gt;&gt;Pod: Answer from local cache (sub-ms)
+    else Cache MISS – cluster name
+        NodeCache-&gt;&gt;CoreDNS: TCP query (no conntrack race!)
+        CoreDNS--&gt;&gt;NodeCache: Answer
+        NodeCache--&gt;&gt;Pod: Answer (now cached)
+    else Cache MISS – external name
+        NodeCache-&gt;&gt;VPC_DNS: UDP query (via node's resolv.conf)
+        VPC_DNS--&gt;&gt;NodeCache: Answer
+        NodeCache--&gt;&gt;Pod: Answer (now cached)
+    end
+</code></pre>
+
+<p>A few things going on here are worth unpacking.</p>
+
+<p>The pod → cache hop skips conntrack entirely. The node-local DNS pod programs <code class="language-plaintext highlighter-rouge">iptables -t raw … -j NOTRACK</code> rules for traffic to/from <code class="language-plaintext highlighter-rouge">169.254.20.10:53</code> (both UDP and TCP). To unpack why that matters: <strong>conntrack</strong> is the Linux kernel module that tracks every network “connection” passing through a node — including UDP “flows,” even though UDP itself is connectionless. It’s what lets <code class="language-plaintext highlighter-rouge">iptables</code> rewrite a Service ClusterIP into a real Pod IP (DNAT) and remember the rewrite so reply packets get translated back. The catch is that when several UDP packets from the same socket leave the box at nearly the same instant — exactly what happens when glibc fires A and AAAA queries in parallel — they can race each other into conntrack. Two packets try to insert the same flow entry at the same time, one of them loses, and the kernel drops it. The application’s resolver doesn’t see a reply, waits out its <strong>5-second timeout</strong>, and retries — which is the origin of the infamous “DNS is randomly slow by exactly 5 seconds” reports. Because NodeLocal traffic is marked <code class="language-plaintext highlighter-rouge">NOTRACK</code>, no conntrack entry is ever created for the pod → cache hop, so the race simply can’t happen there. See <a href="https://github.com/kubernetes/kubernetes/issues/56903">kubernetes/kubernetes#56903</a> and Weaveworks’ “Racy conntrack” post for the full kernel-level write-up.</p>
+
+<p>The cache → CoreDNS hop is upgraded to TCP. By default the node-local agent talks to the upstream <code class="language-plaintext highlighter-rouge">kube-dns</code> Service over TCP, reusing a small pool of long-lived connections. TCP entries leave conntrack as soon as the FIN handshake completes, instead of waiting out the default <code class="language-plaintext highlighter-rouge">nf_conntrack_udp_timeout</code> of 30s — which dramatically shrinks the conntrack table on busy nodes. <a href="https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/">[2]</a></p>
+
+<p>Negative caching is re-enabled. Quick refresher: an <strong>NXDOMAIN</strong> is the DNS response code that means “this name does not exist” — the resolver checked, and there’s no such record, anywhere. <strong>Negative caching</strong> is when the resolver remembers those “doesn’t exist” answers for a while, instead of re-asking upstream every single time. That matters in Kubernetes because <code class="language-plaintext highlighter-rouge">ndots:5</code> makes the resolver walk through three or four made-up names (<code class="language-plaintext highlighter-rouge">api.example.com.&lt;namespace&gt;.svc.cluster.local.</code>, then <code class="language-plaintext highlighter-rouge">…svc.cluster.local.</code>, then <code class="language-plaintext highlighter-rouge">…cluster.local.</code>) before it tries the real one — and each of those wrong guesses comes back as NXDOMAIN. Without negative caching, every call from every pod re-asks upstream for those same non-existent names. NodeLocal DNSCache caches the NXDOMAINs locally, so after the first miss those wrong guesses are answered instantly from the node’s cache and the upstream “NXDOMAIN storm” collapses into a single round-trip after warmup.</p>
+
+<p>Failover is health-checked. The agent listens on the local IP via a dummy interface and also binds to the kube-dns ClusterIP virtually, so if the agent dies, the kernel routes pod queries straight to the kube-dns Service — degraded but still functional.</p>
+
+<p>It’s been stable since Kubernetes v1.18, promoted to GA in <a href="https://github.com/kubernetes/enhancements/issues/1024">KEP-1024</a>. Enabled by default on GKE, available as an addon on EKS.</p>
+
+<p>The Pod’s <code class="language-plaintext highlighter-rouge">resolv.conf</code> after enabling NodeLocal DNSCache looks like:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>nameserver 169.254.20.10    # NodeLocal cache, not CoreDNS directly
+search default.svc.cluster.local svc.cluster.local cluster.local
+options ndots:5
+</code></pre></div></div>
+
+<p>To enable it on EKS, deploy the <code class="language-plaintext highlighter-rouge">node-local-dns</code> DaemonSet with the appropriate kube-dns ClusterIP substituted:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">kubedns</span><span class="o">=</span><span class="si">$(</span>kubectl get svc kube-dns <span class="nt">-n</span> kube-system <span class="nt">-o</span> <span class="nv">jsonpath</span><span class="o">={</span>.spec.clusterIP<span class="o">}</span><span class="si">)</span>
+<span class="nv">localdns</span><span class="o">=</span><span class="s2">"169.254.20.10"</span>
+<span class="nv">domain</span><span class="o">=</span><span class="s2">"cluster.local"</span>
+
+curl <span class="nt">-Lo</span> nodelocaldns.yaml <span class="se">\</span>
+  https://raw.githubusercontent.com/kubernetes/kubernetes/master/cluster/addons/dns/nodelocaldns/nodelocaldns.yaml
+
+<span class="nb">sed</span> <span class="nt">-i</span> <span class="s2">"s/__PILLAR__LOCAL__DNS__/</span><span class="nv">$localdns</span><span class="s2">/g"</span> nodelocaldns.yaml
+<span class="nb">sed</span> <span class="nt">-i</span> <span class="s2">"s/__PILLAR__DNS__DOMAIN__/</span><span class="nv">$domain</span><span class="s2">/g"</span>  nodelocaldns.yaml
+<span class="nb">sed</span> <span class="nt">-i</span> <span class="s2">"s/__PILLAR__DNS__SERVER__/</span><span class="nv">$kubedns</span><span class="s2">/g"</span> nodelocaldns.yaml
+
+kubectl apply <span class="nt">-f</span> nodelocaldns.yaml
+</code></pre></div></div>
+
+<p>One footnote on rollout: if (and only if) kube-proxy is running in <code class="language-plaintext highlighter-rouge">ipvs</code> mode, you also need to flip the kubelet <code class="language-plaintext highlighter-rouge">--cluster-dns</code> flag on each node to <code class="language-plaintext highlighter-rouge">169.254.20.10</code> and restart the kubelet. In the default <code class="language-plaintext highlighter-rouge">iptables</code> mode you can skip that step — the agent binds to <em>both</em> <code class="language-plaintext highlighter-rouge">169.254.20.10</code> and the kube-dns ClusterIP simultaneously, and the NOTRACK rules ensure traffic to the ClusterIP is intercepted locally without DNAT.</p>
+
+<blockquote>
+  <p><strong>Reference:</strong> <a href="https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/">Kubernetes – Using NodeLocal DNSCache</a>, <a href="https://github.com/kubernetes/kubernetes/issues/56903">kubernetes/kubernetes#56903</a></p>
+</blockquote>
+
+<h3 id="eks-auto-mode">EKS Auto Mode</h3>
+
+<p>EKS Auto Mode changes where CoreDNS lives in a meaningful way. Instead of running as a centralized Deployment of pods in <code class="language-plaintext highlighter-rouge">kube-system</code>, Auto Mode runs CoreDNS as a <strong>systemd service on every worker node</strong>, alongside the VPC CNI and EBS CSI driver. DNS queries from pods always go to the node-local CoreDNS instance — effectively giving you the same locality benefit as NodeLocal DNSCache, but managed entirely by AWS. Port 53 is reserved on Auto Mode nodes, which means if you try to deploy the upstream <code class="language-plaintext highlighter-rouge">node-local-dns</code> DaemonSet, the pods will fail to bind and crash-loop.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">ndots:5</code> amplification and the 1024 PPS per-ENI limit are unchanged — those are properties of the pod’s <code class="language-plaintext highlighter-rouge">resolv.conf</code> and the EC2 instance, not of how CoreDNS is packaged. But because every node has its own local CoreDNS, the conntrack race and cross-node hop latency issues from Layer 3 above are already addressed by the architecture itself.</p>
+
+<blockquote>
+  <p><strong>Reference:</strong> <a href="https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html">EKS Auto Mode – Networking</a>, <a href="https://repost.aws/articles/ARGrPcCxZETRCNh9ktPhM_RA/how-do-i-troubleshoot-dns-in-amazon-eks-auto-mode">Troubleshoot DNS in Amazon EKS Auto Mode (re:Post)</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/managing-coredns.html">Manage CoreDNS for DNS in Amazon EKS</a></p>
+</blockquote>
+
+<hr />
+
+<h2 id="aws-dns-the-limits-that-will-find-you-in-production">AWS DNS: The Limits That Will Find You in Production</h2>
+
+<h3 id="the-1024-pps-per-eni-hard-limit">The 1024 PPS per ENI Hard Limit</h3>
+
+<p>This is the single most operationally important DNS constraint on AWS. Every ENI attached to an EC2 instance or Lambda function has a <strong>hard limit of 1,024 packets per second</strong> to AWS link-local services. Crucially, that’s an <em>aggregate</em> budget shared across Route 53 Resolver DNS queries (<code class="language-plaintext highlighter-rouge">169.254.169.253</code>, <code class="language-plaintext highlighter-rouge">fd00:ec2::253</code>, or VPC CIDR <code class="language-plaintext highlighter-rouge">+2</code>), Instance Metadata Service calls to <code class="language-plaintext highlighter-rouge">169.254.169.254</code>, Amazon Time Sync NTP at <code class="language-plaintext highlighter-rouge">169.254.169.123</code>, and Windows licensing activation traffic on Windows AMIs.</p>
+
+<p>You can’t raise the quota. Excess packets are silently dropped at the host, and your application just sees DNS timeouts and retries.</p>
+
+<blockquote>
+  <p>“Each network interface for an EC2 instance can send a maximum of 1024 packets per second to Route 53 Resolver. […] This quota applies to the combined total of DNS queries, IMDS, NTP, and Windows licensing activation traffic to link-local addresses.” — <a href="https://docs.aws.amazon.com/whitepapers/latest/hybrid-cloud-dns-options-for-vpc/constraints.html">AWS Hybrid Cloud DNS – Constraints</a></p>
+</blockquote>
+
+<p>1024 PPS is easier to hit than it sounds. A Kubernetes node with dozens of pods doing external DNS resolution under <code class="language-plaintext highlighter-rouge">ndots:5</code> produces up to 8 UDP packets per <code class="language-plaintext highlighter-rouge">getaddrinfo</code> call (4 search-list permutations × A+AAAA). About <strong>128 application-level lookups per second</strong> per node is enough to saturate the budget — and IMDSv1/v2 chatter from your sidecars and SDKs eats into the same pool.</p>
+
+<p>It’s worth being explicit about what <em>doesn’t</em> fix this: the 1024 PPS limit is enforced at the <strong>instance ENI</strong>, on packets destined for link-local addresses. You can’t lift it by adding Route 53 Resolver endpoints, by switching to a bigger instance type, or by pointing at a different VPC DNS IP. As long as the instance is sending to <code class="language-plaintext highlighter-rouge">169.254.169.253</code> (or VPC CIDR +2), the host-level rate limiter is what counts the packets. The actual mitigations are all about <em>not sending so many packets in the first place</em>:</p>
+
+<ul>
+  <li><strong>NodeLocal DNSCache</strong> is the big one. Most queries are served from a per-node cache and never hit the link-local resolver at all; misses are forwarded to CoreDNS over a persistent TCP connection, which amortizes the per-packet cost and avoids the conntrack churn UDP causes.</li>
+  <li><strong>Lower <code class="language-plaintext highlighter-rouge">ndots</code></strong> (or use FQDNs with a trailing dot for hot external names). This collapses the 4×-search-list amplification described above into a single query, which alone can cut DNS PPS by 4–8×.</li>
+</ul>
+
+<h3 id="route53-api-5-requestssecond">Route53 API: 5 Requests/Second</h3>
+
+<p>The Route 53 <strong>management</strong> API — zone and record CRUD — is rate-limited to <strong>5 requests per second per AWS account</strong>, full stop, regardless of region. This is completely separate from the DNS query path and covers operations like <code class="language-plaintext highlighter-rouge">ChangeResourceRecordSets</code>, <code class="language-plaintext highlighter-rouge">ListResourceRecordSets</code>, <code class="language-plaintext highlighter-rouge">CreateHostedZone</code>, and friends. Exceed it and Route 53 returns HTTP <code class="language-plaintext highlighter-rouge">400</code> with <code class="language-plaintext highlighter-rouge">Code=Throttling</code> and <code class="language-plaintext highlighter-rouge">Message="Rate exceeded"</code>.</p>
+
+<p>Two specific shapes that bite in production. First, <code class="language-plaintext highlighter-rouge">ChangeResourceRecordSets</code> has its own payload limits: a single change can’t contain more than <strong>1,000 <code class="language-plaintext highlighter-rouge">ResourceRecord</code> elements</strong> (and an <code class="language-plaintext highlighter-rouge">UPSERT</code> counts each record twice, so the practical cap is 500), and the sum of <code class="language-plaintext highlighter-rouge">Value</code> characters can’t exceed <strong>32,000 characters</strong> (also doubled for <code class="language-plaintext highlighter-rouge">UPSERT</code>). Bulk DNS migrations need to batch carefully. Second, <code class="language-plaintext highlighter-rouge">external-dns</code> and similar controllers — at scale, with hundreds of Services and Ingresses, the reconciliation loop can saturate the 5 req/s budget all by itself. Bumping <code class="language-plaintext highlighter-rouge">--interval</code>, using <code class="language-plaintext highlighter-rouge">--batch-change-size</code>, and enabling exponential-backoff retries usually does the trick.</p>
+
+<p><a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DNSLimitations.html">[3]</a> <a href="https://repost.aws/knowledge-center/route-53-avoid-throttling-errors">[4]</a></p>
+
+<h3 id="route53-resolver-inbound-and-outbound-endpoints">Route53 Resolver: Inbound and Outbound Endpoints</h3>
+
+<p>Route53 Resolver is a managed DNS relay that lives inside your VPC, in two flavors. <strong>Inbound endpoints</strong> expose an ENI inside your VPC that accepts DNS queries <em>from</em> on-premises resolvers — this lets on-prem infrastructure resolve private hosted zone names like <code class="language-plaintext highlighter-rouge">rds.internal</code> without standing up a full split-horizon DNS. The on-prem resolver forwards to the inbound endpoint IP, which hands the query to the VPC DNS. <strong>Outbound endpoints</strong> go the other direction: they forward queries <em>from</em> your VPC out to on-premises resolvers, based on forwarding rules. Useful when your VPC workloads need to resolve on-prem names (<code class="language-plaintext highlighter-rouge">corp.internal</code>) that only exist outside AWS.</p>
+
+<p>Both flavors come with caveats that affect latency and reliability. Endpoint ENIs are pinned to specific subnets and AZs — AWS requires at least two endpoint IPs across two AZs for redundancy, and if you under-provision, an AZ outage can still throttle resolution. Outbound resolver rules are matched against the queried name <em>before</em> the VPC’s default resolver answers, so a rule for <code class="language-plaintext highlighter-rouge">corp.internal</code> short-circuits the VPC DNS path entirely; a mistyped or overly broad rule (e.g., <code class="language-plaintext highlighter-rouge">internal</code> with <code class="language-plaintext highlighter-rouge">RECURSIVE</code> action) can black-hole queries for an entire suffix. Each resolver endpoint IP has its own per-IP query throughput (around 10,000 QPS) — AWS recommends scaling by adding endpoint IPs rather than leaning on a single 2-IP endpoint. Note that this is a separate budget from the 1024 PPS instance ENI limit discussed earlier; an endpoint helps on-prem ↔ VPC traffic, not your in-VPC workload’s per-instance packet budget.</p>
+
+<pre><code class="language-mermaid">flowchart LR
+    subgraph VPC
+        P[Pod / EC2] --&gt;|DNS query| VPC_DNS[VPC DNS\n169.254.169.253]
+        VPC_DNS --&gt;|"cluster.local\nPrivate Hosted Zone"| PHZ[Route53 Private\nHosted Zone]
+        VPC_DNS --&gt;|"corp.internal rule"| OUT[Outbound Endpoint ENI]
+        IN[Inbound Endpoint ENI] --&gt; VPC_DNS
+    end
+
+    subgraph On-Premises
+        OnPrem[On-prem DNS\nResolver] --&gt;|"rds.internal query"| IN
+        OUT --&gt;|"corp.internal query"| OnPrem
+    end
+
+    style VPC_DNS fill:#3b82f6,color:#fff
+    style OUT fill:#10b981,color:#fff
+    style IN fill:#10b981,color:#fff
+    style PHZ fill:#6c63ff,color:#fff
+</code></pre>
+
+<blockquote>
+  <p><strong>Reference:</strong> <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html">Route53 Resolver</a>, <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver-rules-managing.html">Resolver endpoints and rules</a></p>
+</blockquote>
+
+<h3 id="route53-dns-firewall">Route53 DNS Firewall</h3>
+
+<p>Route53 DNS Firewall sits between your workload and the VPC DNS resolver, evaluating domain-based allow/block/override rules <strong>at the VPC DNS level</strong> before the query leaves your VPC.</p>
+
+<p>Three things to watch out for in practice. The first is the BLOCK action itself: depending on the rule’s <code class="language-plaintext highlighter-rouge">BlockResponse</code> (<code class="language-plaintext highlighter-rouge">NODATA</code>, <code class="language-plaintext highlighter-rouge">NXDOMAIN</code>, or <code class="language-plaintext highlighter-rouge">OVERRIDE</code> with a synthetic CNAME / A record), the firewall returns the configured response instead of forwarding upstream. Applications see a failed lookup and typically log <code class="language-plaintext highlighter-rouge">NXDOMAIN</code> — or, for <code class="language-plaintext highlighter-rouge">NODATA</code>, a successful query with an empty answer set that some clients surface as <code class="language-plaintext highlighter-rouge">SERVFAIL</code>. If rule groups aren’t maintained carefully, legitimate domains get caught in the crossfire; the classic incident is a CDN moving its origin to a domain that happens to match a regex on a generic threat-feed list.</p>
+
+<p>Second, fail-open vs. fail-close. The <code class="language-plaintext highlighter-rouge">FirewallFailOpen</code> setting per VPC defaults to <code class="language-plaintext highlighter-rouge">ALLOW</code> (fail-open) — if the firewall is unavailable or times out, queries are allowed through. Switch it to <code class="language-plaintext highlighter-rouge">DENY</code> (fail-close) and a Firewall outage blocks all DNS resolution in the VPC. That’s a reliability vs. security call you have to make explicitly.</p>
+
+<p>Third, latency. DNS Firewall adds a small evaluation cost for every query — typically single-digit milliseconds, but on high-QPS workloads it compounds.</p>
+
+<p>To see what’s actually happening, enable query logging and watch CloudWatch Logs. Each entry shows the action taken (ALLOW, BLOCK, OVERRIDE) and the matched rule group.</p>
+
+<blockquote>
+  <p><strong>Reference:</strong> <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver-dns-firewall.html">Route53 DNS Firewall</a>, <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver-dns-firewall-vpc-associating-rule-group.html">DNS Firewall fail-open setting</a></p>
+</blockquote>
+
+<hr />
+
+<p>Thanks for reading — hope this made DNS feel a little less like a black box. If any of it saves you a three-hour debugging session some Tuesday afternoon, it was worth writing.</p>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      document.querySelectorAll("pre > code.language-mermaid").forEach(function (code) {
+        var pre = code.parentElement;
+        var div = document.createElement("div");
+        div.className = "mermaid";
+        div.textContent = code.textContent;
+        pre.parentElement.replaceChild(div, pre);
+      });
+      mermaid.initialize({ startOnLoad: true, theme: "default" });
+    });
+  </script>
+
+  <footer class="post-footer">
+    <div class="social-sharing">
+  <h3>Share this post</h3>
+  <div class="share-buttons">
+    <!-- Twitter -->
+    <a href="https://twitter.com/intent/tweet?text=Back+to+the+Basics%3A+DNS+Resolution&url=http://localhost:4000/2026/05/08/dns-resolution/"
+       onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;"
+       class="share-button twitter">
+       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+       </svg>
+       <span>Tweet</span>
+    </a>
+
+    <!-- LinkedIn -->
+    <a href="https://www.linkedin.com/shareArticle?mini=true&url=http://localhost:4000/2026/05/08/dns-resolution/&title=Back+to+the+Basics%3A+DNS+Resolution&summary=Every+engineer+eventually+gets+bitten+by+DNS.+A+service+starts+timing+out%2C+and+three+hours+later+you+realize+your+pod+has+been+hammering+...&source=Rafa Cardoso's Tech Blog"
+       onclick="window.open(this.href, 'linkedin-share', 'width=550,height=435');return false;"
+       class="share-button linkedin">
+       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+         <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+       </svg>
+       <span>Share</span>
+    </a>
+
+    <!-- Facebook -->
+    <a href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:4000/2026/05/08/dns-resolution/"
+       onclick="window.open(this.href, 'facebook-share', 'width=550,height=435');return false;"
+       class="share-button facebook">
+       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+         <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
+       </svg>
+       <span>Share</span>
+    </a>
+  </div>
+</div>
+
+<style>
+.social-sharing {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.social-sharing h3 {
+  font-size: 1.2rem;
+  color: #343a40;
+  margin-bottom: 1rem;
+}
+
+.share-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.share-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  text-decoration: none;
+  color: white;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.share-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.twitter {
+  background-color: #1DA1F2;
+}
+
+.twitter:hover {
+  background-color: #0d8ed9;
+}
+
+.linkedin {
+  background-color: #0077B5;
+}
+
+.linkedin:hover {
+  background-color: #005e8f;
+}
+
+.facebook {
+  background-color: #4267B2;
+}
+
+.facebook:hover {
+  background-color: #34518d;
+}
+
+@media (max-width: 768px) {
+  .share-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .share-button {
+    justify-content: center;
+  }
+}
+</style> 
+    
+    <div class="post-navigation">
+      
+        <a class="prev-post" href="/2026/03/09/nitro-enclave-kms/">&larr; Scaling Private Key Operations Across a Fleet of AWS Nitro Enclaves</a>
+      
+      
+    </div>
+  </footer>
+</article>
+<style>
+.post {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.post-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.post-title {
+  font-size: 2.5rem;
+  color: #1a1a1a;
+  margin-bottom: 1rem;
+}
+
+.post-meta {
+  color: #6c757d;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.post-tags {
+  margin: 1rem 0;
+}
+
+.post-tag {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  margin: 0.2rem;
+  background: #f8f9fa;
+  border-radius: 20px;
+  color: #495057;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.post-tag:hover {
+  background: #e9ecef;
+  color: #1a1a1a;
+}
+
+.post-content {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #343a40;
+}
+
+.post-content p {
+  margin-bottom: 1.5rem;
+}
+
+.post-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 2rem 0;
+}
+
+.post-navigation {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+}
+
+.prev-post,
+.next-post {
+  color: #007bff;
+  text-decoration: none;
+  max-width: 45%;
+}
+
+.prev-post:hover,
+.next-post:hover {
+  color: #0056b3;
+}
+
+@media (max-width: 768px) {
+  .post {
+    padding: 1rem;
+  }
+
+  .post-title {
+    font-size: 2rem;
+  }
+
+  .post-navigation {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .prev-post,
+  .next-post {
+    max-width: 100%;
+  }
+}
+</style> 
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Rafa Cardoso&#39;s Tech Blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Rafa Cardoso</li><li><a class="u-email" href="mailto:rafavinicius67@gmail.com">rafavinicius67@gmail.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Insights on AWS, DevOps, and AI</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

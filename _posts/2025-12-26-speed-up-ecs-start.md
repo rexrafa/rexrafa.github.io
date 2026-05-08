@@ -4,7 +4,7 @@ title: "Speeding up ECS taks startup with Seekable OCI (SOCI)"
 date: 2025-12-26 09:00:00 -0300
 categories: Container
 tags: [aws, Container, ECS, CI/CD, ECR, scalability, Github Action]
-author: Rafa Oliveira
+author: Rafa Cardoso
 ---
 ## Introduction
 

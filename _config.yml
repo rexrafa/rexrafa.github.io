@@ -1,8 +1,8 @@
-title: "Rafa Oliveira's Tech Blog"
+title: "Rafa Cardoso's Tech Blog"
 description: "Insights on AWS, DevOps, and AI"
 baseurl: ""
 url: "https://rexrafa.github.io"
-author: "Rafael Oliveira"
+author: "Rafa Cardoso"
 email: "rafavinicius67@gmail.com"
 
 # Build settings
@@ -31,7 +31,7 @@ defaults:
       type: "posts"
     values:
       layout: "post"
-      author: "Rafael Oliveira"
+      author: "Rafa Cardoso"
       show_excerpts: true
 
 # Social links

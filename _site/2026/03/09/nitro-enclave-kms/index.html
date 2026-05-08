@@ -3,27 +3,27 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
-<title>Scaling Private Key Operations Across a Fleet of AWS Nitro Enclaves | Rafa Oliveira’s Tech Blog</title>
+<title>Scaling Private Key Operations Across a Fleet of AWS Nitro Enclaves | Rafa Cardoso’s Tech Blog</title>
 <meta name="generator" content="Jekyll v3.9.5" />
 <meta property="og:title" content="Scaling Private Key Operations Across a Fleet of AWS Nitro Enclaves" />
-<meta name="author" content="Rafa Oliveira" />
+<meta name="author" content="Rafa Cardoso" />
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="Recently I was working on a project where we needed to use AWS Nitro Enclaves as a Trusted Execution Environment (TEE) to handle highly sensitive cryptographic keys. The challenge was straightforward to describe but tricky to solve: we needed an asymmetric key pair that multiple enclave instances could share for encrypting and decrypting files, but the private key could never be accessible outside the enclave – not to the host machine, not to operators, not to anyone." />
 <meta property="og:description" content="Recently I was working on a project where we needed to use AWS Nitro Enclaves as a Trusted Execution Environment (TEE) to handle highly sensitive cryptographic keys. The challenge was straightforward to describe but tricky to solve: we needed an asymmetric key pair that multiple enclave instances could share for encrypting and decrypting files, but the private key could never be accessible outside the enclave – not to the host machine, not to operators, not to anyone." />
 <link rel="canonical" href="http://localhost:4000/2026/03/09/nitro-enclave-kms/" />
 <meta property="og:url" content="http://localhost:4000/2026/03/09/nitro-enclave-kms/" />
-<meta property="og:site_name" content="Rafa Oliveira’s Tech Blog" />
+<meta property="og:site_name" content="Rafa Cardoso’s Tech Blog" />
 <meta property="og:type" content="article" />
-<meta property="article:published_time" content="2026-03-09T09:00:00-03:00" />
+<meta property="article:published_time" content="2026-03-09T13:00:00+01:00" />
 <meta name="twitter:card" content="summary" />
 <meta property="twitter:title" content="Scaling Private Key Operations Across a Fleet of AWS Nitro Enclaves" />
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Rafa Oliveira"},"dateModified":"2026-03-09T09:00:00-03:00","datePublished":"2026-03-09T09:00:00-03:00","description":"Recently I was working on a project where we needed to use AWS Nitro Enclaves as a Trusted Execution Environment (TEE) to handle highly sensitive cryptographic keys. The challenge was straightforward to describe but tricky to solve: we needed an asymmetric key pair that multiple enclave instances could share for encrypting and decrypting files, but the private key could never be accessible outside the enclave – not to the host machine, not to operators, not to anyone.","headline":"Scaling Private Key Operations Across a Fleet of AWS Nitro Enclaves","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2026/03/09/nitro-enclave-kms/"},"url":"http://localhost:4000/2026/03/09/nitro-enclave-kms/"}</script>
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Rafa Cardoso"},"dateModified":"2026-03-09T13:00:00+01:00","datePublished":"2026-03-09T13:00:00+01:00","description":"Recently I was working on a project where we needed to use AWS Nitro Enclaves as a Trusted Execution Environment (TEE) to handle highly sensitive cryptographic keys. The challenge was straightforward to describe but tricky to solve: we needed an asymmetric key pair that multiple enclave instances could share for encrypting and decrypting files, but the private key could never be accessible outside the enclave – not to the host machine, not to operators, not to anyone.","headline":"Scaling Private Key Operations Across a Fleet of AWS Nitro Enclaves","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2026/03/09/nitro-enclave-kms/"},"url":"http://localhost:4000/2026/03/09/nitro-enclave-kms/"}</script>
 <!-- End Jekyll SEO tag -->
-<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Rafa Oliveira's Tech Blog" /></head>
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Rafa Cardoso's Tech Blog" /></head>
 <body><header class="site-header" role="banner">
 
-  <div class="wrapper"><a class="site-title" rel="author" href="/">Rafa Oliveira&#39;s Tech Blog</a><nav class="site-nav">
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Rafa Cardoso&#39;s Tech Blog</a><nav class="site-nav">
         <input type="checkbox" id="nav-trigger" class="nav-trigger" />
         <label for="nav-trigger">
           <span class="menu-icon">
@@ -42,11 +42,11 @@
   <header class="post-header">
     <h1 class="post-title">Scaling Private Key Operations Across a Fleet of AWS Nitro Enclaves</h1>
     <div class="post-meta">
-      <time datetime="2026-03-09T09:00:00-03:00">
+      <time datetime="2026-03-09T13:00:00+01:00">
         March 9, 2026
       </time>
       
-        • <span class="post-author">Rafa Oliveira</span>
+        • <span class="post-author">Rafa Cardoso</span>
       
     </div>
     
@@ -713,7 +713,7 @@ nitro-cli build-enclave <span class="se">\</span>
     </a>
 
     <!-- LinkedIn -->
-    <a href="https://www.linkedin.com/shareArticle?mini=true&url=http://localhost:4000/2026/03/09/nitro-enclave-kms/&title=Scaling+Private+Key+Operations+Across+a+Fleet+of+AWS+Nitro+Enclaves&summary=Recently+I+was+working+on+a+project+where+we+needed+to+use+AWS+Nitro+Enclaves+as+a+Trusted+Execution+Environment+%28TEE%29+to+handle+highly+s...&source=Rafa Oliveira's Tech Blog"
+    <a href="https://www.linkedin.com/shareArticle?mini=true&url=http://localhost:4000/2026/03/09/nitro-enclave-kms/&title=Scaling+Private+Key+Operations+Across+a+Fleet+of+AWS+Nitro+Enclaves&summary=Recently+I+was+working+on+a+project+where+we+needed+to+use+AWS+Nitro+Enclaves+as+a+Trusted+Execution+Environment+%28TEE%29+to+handle+highly+s...&source=Rafa Cardoso's Tech Blog"
        onclick="window.open(this.href, 'linkedin-share', 'width=550,height=435');return false;"
        class="share-button linkedin">
        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -810,6 +810,8 @@ nitro-cli build-enclave <span class="se">\</span>
       
         <a class="prev-post" href="/2025/12/26/speed-up-ecs-start/">&larr; Speeding up ECS taks startup with Seekable OCI (SOCI)</a>
       
+      
+        <a class="next-post" href="/2026/05/08/dns-resolution/">Back to the Basics: DNS Resolution &rarr;</a>
       
     </div>
   </footer>
@@ -923,12 +925,12 @@ nitro-cli build-enclave <span class="se">\</span>
 
   <div class="wrapper">
 
-    <h2 class="footer-heading">Rafa Oliveira&#39;s Tech Blog</h2>
+    <h2 class="footer-heading">Rafa Cardoso&#39;s Tech Blog</h2>
 
     <div class="footer-col-wrapper">
       <div class="footer-col footer-col-1">
         <ul class="contact-list">
-          <li class="p-name">Rafael Oliveira</li><li><a class="u-email" href="mailto:rafavinicius67@gmail.com">rafavinicius67@gmail.com</a></li></ul>
+          <li class="p-name">Rafa Cardoso</li><li><a class="u-email" href="mailto:rafavinicius67@gmail.com">rafavinicius67@gmail.com</a></li></ul>
       </div>
 
       <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>

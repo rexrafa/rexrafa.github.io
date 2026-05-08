@@ -4,7 +4,7 @@ title: "Welcome to My Tech Blog"
 date: 2025-06-09 09:00:00 -0300
 categories: general
 tags: [blog]
-author: Rafa Oliveira
+author: Rafa Cardoso
 ---
 
 Hey there! Welcome to my tech blog. I'm Rafael, a Engineer passionate about cloud architecture and automation. Here, I'll be sharing insights about AWS,DevOps practices, and emerging technologies.

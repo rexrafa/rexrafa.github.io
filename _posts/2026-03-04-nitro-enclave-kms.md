@@ -4,7 +4,7 @@ title: "Scaling Private Key Operations Across a Fleet of AWS Nitro Enclaves"
 date: 2026-03-09 09:00:00 -0300
 categories: Security
 tags: [aws, security, Nitro Enclaves, KMS, cryptography, TEE, encryption]
-author: Rafa Oliveira
+author: Rafa Cardoso
 ---
 
 Recently I was working on a project where we needed to use AWS Nitro Enclaves as a Trusted Execution Environment (TEE) to handle highly sensitive cryptographic keys. The challenge was straightforward to describe but tricky to solve: we needed an asymmetric key pair that multiple enclave instances could share for encrypting and decrypting files, but the private key could **never** be accessible outside the enclave -- not to the host machine, not to operators, not to anyone.
